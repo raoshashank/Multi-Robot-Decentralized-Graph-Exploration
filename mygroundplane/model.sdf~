@@ -1,0 +1,74 @@
+<?xml version="1.0"?>
+<sdf version="1.4">
+<model name="mygroundplane">
+  <static>true</static>
+    <link name="link">
+      <collision name="collision">
+        <geometry>
+          <plane>
+            <normal>0 0 1</normal>
+            <size>50 50</size>
+          </plane>
+        </geometry>
+        <surface>
+          <friction>
+            <ode>
+              <mu>100</mu>
+              <mu2>50</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="visual">
+        <cast_shadows>false</cast_shadows>
+        <geometry>
+          <plane>
+            <normal>0 0 1</normal>
+            <size>50 50</size>
+          </plane>
+        </geometry>
+        <material>
+          <script>
+            <uri>model://mygroundplane/materials/scripts/mygroundplane.material</uri>
+            <uri>model://mygroundplane/materials/scripts</uri>
+            <uri>model://mygroundplane/materials/textures</uri>		
+	    <name>MyGroundPlane/Image</name>
+          </script>
+        </material>
+      </visual>
+    </link>
+  </model>
+
+<model name='wallworld'>
+    <link name='Wall_0'>
+      <collision name='Wall_0_Collision'>
+        <geometry>
+          <box>
+            <size>1.5051 0.2 2.5</size>
+          </box>
+        </geometry>
+        <pose>0 0 1.25 0 -0 0</pose>
+      </collision>
+      <visual name='Wall_0_Visual'>
+        <pose>0 0 1.25 0 -0 0</pose>
+        <geometry>
+          <box>
+            <size>1.5051 0.2 2.5</size>
+          </box>
+        </geometry>
+        <material>
+          <script>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+            <name>Gazebo/Grey</name>
+          </script>
+        </material>
+      </visual>
+      <velocity_decay>
+        <linear>0</linear>
+        <angular>0</angular>
+      </velocity_decay>
+      <pose>-2.45 -2.885 0 0 -0 0.539105</pose>
+    </link>
+    <static>1</static>
+  </model>
+</sdf>
