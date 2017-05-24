@@ -1,0 +1,3 @@
+<launch>
+    <node pkg="my_package" type="simple.py" name="Obiwan" output="screen"></node>
+</launch>

@@ -1,0 +1,3 @@
+<launch>
+<node pkg="topics_mini_project" type="" name="" output="screen">
+</launch>

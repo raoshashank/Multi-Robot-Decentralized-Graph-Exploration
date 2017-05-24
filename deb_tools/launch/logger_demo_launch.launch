@@ -1,0 +1,2 @@
+<launch>
+<node pkg='deb_tools' type='logger_demo.py' name='log_demo' output='screen'></node></launch>

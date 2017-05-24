@@ -1,0 +1,3 @@
+<launch>
+<node pkg="move_kobuki" type="simple_topic_publisher.py" name="move_the_kobuki" output="screen"></node>
+</launch>
