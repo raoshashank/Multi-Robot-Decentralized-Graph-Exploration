@@ -6,6 +6,7 @@ from math import pi
 from random import randint
 import numpy as np
 from project.srv import direction,directionRequest,directionResponse
+from project.srv import dirturn,dirturnRequest,dirturnResponse
 
 rospy.init_node('random_mover',anonymous=False)
 """
@@ -13,6 +14,7 @@ do preliminary scan and move in the direction of maxima in laser scan data
 currently assuming right angle turns
 """
 
+###Lets make turning action also service so that node doesnt
 def turn(dir):
     
     cmd=Twist()
@@ -77,17 +79,29 @@ def callback(msg):
         cmd=Twist()
         pub.publish(cmd)
         rate.sleep()
-        rospy.wait_for_service('/turn_service')
-        servcaller=rospy.ServiceProxy('/turn_service',direction)
-        rospy.loginfo("Calling Service")
+        rospy.wait_for_service('/decide_direction')
+        servcaller=rospy.ServiceProxy('/decide_direction',direction)
+        rospy.wait_for_service('/turn_service_server')
+        servcaller_2=rospy.ServiceProxy('/turn_service_server',dirturn)
         params=directionRequest()
         params.check=check
         decision=servcaller(params)
-        rospy.loginfo(str(decision))
         if decision=='R':
-            turn(0)
+            #turn(0)
+            params_2=dirturnRequest()
+            params_2.dir=0
+            rospy.loginfo("disturn service called")
+            success=servcaller_2(params_2)
+            if success==1:
+                rospy.loginfo("Turn done!!")
+            
         elif decision=='L':
-            turn(1)
+            #turn(1)
+            params_2=dirturnRequest()
+            params_2.dir=1
+            rospy.wait_for_service('/turn_service_server')
+            success=servcaller_2(params_2)
+
         elif decision=='F':
             go_forward()
         elif decision=='U':
@@ -143,7 +157,7 @@ interval_for_angle_measurement=10
 measurement_intervals=[(100,150),(340,380),(520,560)]
 linear_velocity_x=0.4
 angular_velocity_z=pi/10
-rate=rospy.Rate(20)
+rate=rospy.Rate(10)
 data=LaserScan()
 pub=rospy.Publisher('/cmd_vel',Twist,queue_size=1)
 sub=rospy.Subscriber('/scan',LaserScan,callback)

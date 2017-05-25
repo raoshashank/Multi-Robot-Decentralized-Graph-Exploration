@@ -20,6 +20,7 @@ def callback(request):
     
     if i==0:
        rospy.loginfo("Turning left")
+       ###call turn_service with param 1
        response.response="L"
 
     elif i==1:
@@ -27,6 +28,7 @@ def callback(request):
         response.response="F"
     elif i==2:
          rospy.loginfo("Turning Right")
+         ###call turn_service with param 0
          response.response="R"
          
     return response
@@ -36,5 +38,5 @@ def callback(request):
 
 rospy.loginfo("Entered Service")
 while not rospy.is_shutdown():
-    rospy.Service('/turn_service',direction,callback)
+    rospy.Service('/decide_direction',direction,callback)
     rospy.spin()
