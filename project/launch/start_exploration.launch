@@ -1,4 +1,5 @@
 <launch>
-<node>
-</node>
+<node pkg='project' type='direction_service.py' name='direction_service_node' output='screen'></node>
+<node pkg='project' type='turn_service.py' name='turn_service_node' output='screen'></node>
+<node pkg='project' type='move_around_randomly.py' name='random_mover' output='screen'></node>
 </launch>

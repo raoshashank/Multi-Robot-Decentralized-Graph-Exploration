@@ -7,7 +7,6 @@ from random import randint
 import numpy as np
 from project.srv import direction,directionRequest,directionResponse
 from project.srv import dirturn,dirturnRequest,dirturnResponse
-
 rospy.init_node('random_mover',anonymous=False)
 """
 do preliminary scan and move in the direction of maxima in laser scan data
@@ -15,21 +14,6 @@ currently assuming right angle turns
 """
 
 ###Lets make turning action also service so that node doesnt
-def turn(dir):
-    
-    cmd=Twist()
-    if dir==1: ##left turn
-        cmd.angular.z=angular_velocity_z
-    else:
-        cmd.angular.z=-1*angular_velocity_z
-    rospy.loginfo("Turn commence")
-    for i in range(5):
-        pub.publish(cmd)
-        rate.sleep()
-    cmd=Twist()
-    pub.publish(cmd)
-    rospy.loginfo("Turn end")
-
 
 def go_forward():
     cmd=Twist()
@@ -39,74 +23,66 @@ def go_forward():
     cmd=Twist()
     pub.publish(cmd)
     
-
-def turn_around():
-    for i in range(10):
-        pub.publish(cmd)
-        rate.sleep()
-    cmd=Twist()
-    pub.publish(cmd)
-    rospy.loginfo("Turn end")
-   
-
-
 def callback(msg):
     data=msg.ranges
-    cmd=Twist()
-    move_data=[]
     ###find maximas:
     ###check in 3 directions for the free space
     ###slice the ranges array into 3 regions for 3 directions:;left,forward and right
-    left_slice=np.asarray(data[100:140])
+    left_slice=np.asarray(data[115:125])
     left_avg=left_slice.sum()/len(left_slice)
-    mid_slice=np.asarray(data[340:380])
+    mid_slice=np.asarray(data[355:365])
     mid_avg=mid_slice.sum()/len(mid_slice)
-    right_slice=np.asarray(data[580:620])
+    right_slice=np.asarray(data[595:605])
     right_avg=right_slice.sum()/len(right_slice)
     check=[left_avg,mid_avg,right_avg]
     rospy.loginfo("Values i found are:"+str(check))    
     count=0
-    
+    ##Service1 for deciding direction
+    rospy.wait_for_service('/direction_service_server')
+    servcaller=rospy.ServiceProxy('/direction_service_server',direction)
+        
+    #Service2 for turning in the decided direction
+    rospy.wait_for_service('/turn_service_server')
+    servcaller2=rospy.ServiceProxy('/turn_service_server',dirturn)
     ###Check for node position###
     for i in check:
         if i>3:
             count+=1
     
-    if count>=2 or count==0:
-        rospy.loginfo("I'M AT NODE!")
-        ####better method is to call service to turn bot so that this node is paused
-        
+    if count>=2 :
+        rospy.loginfo("I'M AT NODE!")        
         cmd=Twist()
         pub.publish(cmd)
-        rate.sleep()
-        rospy.wait_for_service('/decide_direction')
-        servcaller=rospy.ServiceProxy('/decide_direction',direction)
-        rospy.wait_for_service('/turn_service_server')
-        servcaller_2=rospy.ServiceProxy('/turn_service_server',dirturn)
+        rate.sleep()        
+        ##params for service1
         params=directionRequest()
         params.check=check
-        decision=servcaller(params)
-        if decision=='R':
-            #turn(0)
-            params_2=dirturnRequest()
-            params_2.dir=0
-            rospy.loginfo("disturn service called")
-            success=servcaller_2(params_2)
-            if success==1:
-                rospy.loginfo("Turn done!!")
-            
-        elif decision=='L':
-            #turn(1)
-            params_2=dirturnRequest()
-            params_2.dir=1
-            rospy.wait_for_service('/turn_service_server')
-            success=servcaller_2(params_2)
-
-        elif decision=='F':
+        
+        #param for service2
+        params2=dirturnRequest()
+        deci=servcaller(params)
+        decision=deci.response
+        if decision=="R":
+            ###call turn_service_caller with param 0
+            params2.dir=0
+            status=servcaller2(params2)
+            rospy.loginfo(str(status))
+        elif decision=="L":
+            ###call turn_service_caller with param 1
+            params2.dir=1
+            status=servcaller2(params2)
+            rospy.loginfo(str(status))
+            ##keep going forward
+        elif decision=="F":
             go_forward()
-        elif decision=='U':
-            turn_around()
-
+        
+    elif count==0:
+       rospy.loginfo("I'm at end node!")
+       ###Call turn_service_caller with param 2
+       params2=dirturnRequest()
+       params2.dir=2
+       status=servcaller2(params2)
+       rospy.loginfo(str(status))
     else:
          go_forward()
 """
@@ -154,13 +130,13 @@ def callback(msg):
    a -135 to 135 angle coverage is :(100,150),(340,380),(520,560) 
  """
 interval_for_angle_measurement=10
-measurement_intervals=[(100,150),(340,380),(520,560)]
+measurement_intervals=[(100,140),(340,380),(580,620)]
 linear_velocity_x=0.4
-angular_velocity_z=pi/10
 rate=rospy.Rate(10)
 data=LaserScan()
 pub=rospy.Publisher('/cmd_vel',Twist,queue_size=1)
 sub=rospy.Subscriber('/scan',LaserScan,callback)
 rate.sleep()
 rospy.spin()
+
 
