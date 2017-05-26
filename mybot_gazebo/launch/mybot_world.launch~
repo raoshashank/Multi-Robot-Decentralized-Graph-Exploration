@@ -9,7 +9,7 @@
   <arg name="debug" default="false"/>
   
   <include file="$(find gazebo_ros)/launch/empty_world.launch">
-    <arg name="world_name" value="$(find mybot_gazebo)/worlds/mybot.world"/>
+    <arg name="world_name" value="$(find mybot_gazebo)/worlds/test_world"/>
     <arg name="paused" value="$(arg paused)"/>
     <arg name="use_sim_time" value="$(arg use_sim_time)"/>
     <arg name="gui" value="$(arg gui)"/>
@@ -22,70 +22,9 @@
 
 
   <node name="bot_0" pkg="gazebo_ros" type="spawn_model" output="screen"
-   args="-urdf -param robot_description -model mybot0 -x -5 -y 10 -z 0 -Y 0.6981  -namespace bot_0" />
+   args="-urdf -param robot_description -model mybot0 -namespace bot_0" />
 
 
-  <node name="bot_1" pkg="gazebo_ros" type="spawn_model" output="screen"
-   args="-urdf -param robot_description -model mybot1 -x -5 -y 5 -z 0 -Y 2.6179  -namespace bot_1" />
-
-
-  <node name="bot_2" pkg="gazebo_ros" type="spawn_model" output="screen"
-   args="-urdf -param robot_description -model mybot2 -x -5 -y 0 -z 0 -Y 3.665  -namespace bot_2" />
-
-    <node name="bot_3" pkg="gazebo_ros" type="spawn_model" output="screen"
-   args="-urdf -param robot_description -model mybot3 -x -5 -y -5 -z 0 -Y 5.236 -namespace bot_3" />
-
-
-  <node name="bot_4" pkg="gazebo_ros" type="spawn_model" output="screen"
-   args="-urdf -param robot_description -model mybot4 -x 0 -y 10 -z 0 -Y 3.1415  -namespace bot_4" />
-
-
-  <node name="bot_5" pkg="gazebo_ros" type="spawn_model" output="screen"
-   args="-urdf -param robot_description -model mybot5 -x 0 -y 5 -z 0 -Y 0  -namespace bot_5" />
-
-
-  <node name="bot_6" pkg="gazebo_ros" type="spawn_model" output="screen"
-   args="-urdf -param robot_description -model mybot6 -x 0 -y 0 -z 0 -Y 1.57  -namespace bot_6" />
-
-    <node name="bot_7" pkg="gazebo_ros" type="spawn_model" output="screen"
-   args="-urdf -param robot_description -model mybot7 -x 0 -y -5 -z 0 -Y -1.57  -namespace bot_7" />
-
-
-
-  <node name="bot_8" pkg="gazebo_ros" type="spawn_model" output="screen"
-   args="-urdf -param robot_description -model mybot8 -x 5 -y 10 -z 0 -Y 1.57  -namespace bot_8" />
-
-
-  <node name="bot_9" pkg="gazebo_ros" type="spawn_model" output="screen"
-   args="-urdf -param robot_description -model mybot9 -x 5 -y 5 -z 0 -Y 0.5235 -namespace bot_9" />
-
-
-  <node name="bot_10" pkg="gazebo_ros" type="spawn_model" output="screen"
-   args="-urdf -param robot_description -model mybot10 -x 5 -y 0 -z 0 -Y 5.4977  -namespace bot_10" />
-
-    <node name="bot_11" pkg="gazebo_ros" type="spawn_model" output="screen"
-   args="-urdf -param robot_description -model mybot11 -x 5 -y -5 -z 0 -Y 3.926  -namespace bot_11" />
-
-   
-
-  <node name="bot_12" pkg="gazebo_ros" type="spawn_model" output="screen"
-   args="-urdf -param robot_description -model mybot12 -x 10 -y 10 -z 0 -Y  2.6179 -namespace bot_12" />
-
-
-  <node name="bot_13" pkg="gazebo_ros" type="spawn_model" output="screen"
-   args="-urdf -param robot_description -model mybot13 -x 10 -y 5 -z 0 -Y 3.1415  -namespace bot_13" />
-
-
-  <node name="bot_14" pkg="gazebo_ros" type="spawn_model" output="screen"
-   args="-urdf -param robot_description -model mybot14 -x 10 -y 0 -z 0 -Y 1.047  -namespace bot_14" />
-
-    <node name="bot_15" pkg="gazebo_ros" type="spawn_model" output="screen"
-   args="-urdf -param robot_description -model mybot15 -x 10 -y -5 -z 0 -Y 1.57  -namespace bot_15" />
-
-   
-
-
- 
 <!--
   <node name="bot_1" pkg="gazebo_ros" type="spawn_model" output="screen"
    args="-urdf -param robot_description -model mybot2 -x 3 -y 3 -z 0 -Y 1.57  -namespace bot_1"/>

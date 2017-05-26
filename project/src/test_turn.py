@@ -63,7 +63,7 @@ def callback(msg):
     if flag==0:
         flag=1
         initial_heading=heading
-        heading_cmd=initial_heading+(pi/2)
+        heading_cmd=initial_heading-(pi/2)
     
     
     heading_error=heading_cmd-heading
@@ -72,22 +72,22 @@ def callback(msg):
     if heading_error<=-pi:
         heading_error=heading_error+2*pi
     
-    cmd.angular.z=-0.3*heading_error
+    cmd.angular.z=-0.8*heading_error
     pub.publish(cmd)
 
     if heading_error < 0.001:
+        rospy.loginfo("Turn done!")
         return EmptyResponse
-
 
 
 
 rospy.init_node('test_node')
 rate=rospy.Rate(20)
-pub=rospy.Publisher('/cmd_vel',Twist,queue_size=1)
+pub=rospy.Publisher('/bot_0/cmd_vel',Twist,queue_size=1)
 #cmd=Twist()
 #cmd.angular.z=pi/10
 #delta=0.002
-sub=rospy.Subscriber('/odometry/filtered',Odometry,callback)
+sub=rospy.Subscriber('/bot_0/odom',Odometry,callback)
 rospy.spin()
 
 

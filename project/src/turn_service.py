@@ -51,7 +51,7 @@ rospy.init_node('turn_service_node')
 angular_velocity_z=pi/4
 linear_velocity_x=0.4
 rate=rospy.Rate(5)
-pub=rospy.Publisher('/cmd_vel',Twist,queue_size=1)
+pub=rospy.Publisher('/bot_0/cmd_vel',Twist,queue_size=1)
 while not rospy.is_shutdown():
-    rospy.Service("/turn_service_server",dirturn,callback)
+    rospy.Service("/turn_service_server",dirturn,callback
     rospy.spin()

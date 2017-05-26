@@ -2,9 +2,10 @@
 import rospy
 from sensor_msgs.msg import LaserScan
 from geometry_msgs.msg import Twist
-from math import pi
+from math import pi,atan2
 from random import randint
 import numpy as np
+from geometry_msgs.msg import Odometry
 from project.srv import direction,directionRequest,directionResponse
 from project.srv import dirturn,dirturnRequest,dirturnResponse
 rospy.init_node('random_mover',anonymous=False)
@@ -15,24 +16,45 @@ currently assuming right angle turns
 
 ###Lets make turning action also service so that node doesnt
 
+q=[0,0,0,0]
+odom=Odometry()
+heading_error=0
+heading=0
+cmd=Twist()
+cmd.linear.x=linear_velocity_x
+    
+def callback2(msg):
+    global q
+    q[0]=msg.pose.pose.orientation.w
+    q[1]=msg.pose.pose.orientation.x
+    q[2]=msg.pose.pose.orientation.y
+    q[3]=msg.pose.pose.orientation.z  
+    heading=atan2(2*(q[0]*q[3]+q[1]*q[2]),1-2*(q[2]*q[2]+q[3]*q[3]))
+
+
+###now that Diff drive bot is used,P-Controller to be used for all motions.
 def go_forward():
-    cmd=Twist()
-    cmd.linear.x=linear_velocity_x
+    global heading_error
+    global heading
+    global q
+    global cmd
     pub.publish(cmd)
     rate.sleep()
     cmd=Twist()
     pub.publish(cmd)
     
+
+
 def callback(msg):
     data=msg.ranges
     ###find maximas:
     ###check in 3 directions for the free space
     ###slice the ranges array into 3 regions for 3 directions:;left,forward and right
-    left_slice=np.asarray(data[115:125])
+    left_slice=np.asarray(data[0:10])
     left_avg=left_slice.sum()/len(left_slice)
     mid_slice=np.asarray(data[355:365])
     mid_avg=mid_slice.sum()/len(mid_slice)
-    right_slice=np.asarray(data[595:605])
+    right_slice=np.asarray(data[710:720])
     right_avg=right_slice.sum()/len(right_slice)
     check=[left_avg,mid_avg,right_avg]
     rospy.loginfo("Values i found are:"+str(check))    
@@ -130,12 +152,13 @@ def callback(msg):
    a -135 to 135 angle coverage is :(100,150),(340,380),(520,560) 
  """
 interval_for_angle_measurement=10
-measurement_intervals=[(100,140),(340,380),(580,620)]
-linear_velocity_x=0.4
+#measurement_intervals=[(100,140),(340,380),(580,620)]
+linear_velocity_x=0.1
 rate=rospy.Rate(10)
 data=LaserScan()
-pub=rospy.Publisher('/cmd_vel',Twist,queue_size=1)
-sub=rospy.Subscriber('/scan',LaserScan,callback)
+pub=rospy.Publisher('/bot_0/cmd_vel',Twist,queue_size=1)
+sub=rospy.Subscriber('/bot_0/laser/scan',LaserScan,callback)
+sub_odom=rospy.Subscriber('/bot_0/odom',Odometry,callback2)
 rate.sleep()
 rospy.spin()
 
