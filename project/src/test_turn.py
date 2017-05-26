@@ -8,12 +8,10 @@ from std_srvs.srv import EmptyRequest,Empty,EmptyResponse
 
 ##try closed loop control by checking odometry information 
 flag=0
-#initial_angle =0
 heading_cmd=0
 q=[]
 heading=0
-#final_angle_lower=0
-#final_angle_upper=0
+
 """
 def callback(msg):
     global flag
