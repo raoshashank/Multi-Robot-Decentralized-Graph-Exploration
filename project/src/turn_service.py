@@ -4,7 +4,7 @@ from geometry_msgs.msg import Twist
 from math import pi
 from project.srv import dirturn,dirturnRequest,dirturnResponse
 
-###Need to move forward after turning around.
+###Need to accurately turn by 90deg
 def go_forward():
     cmd=Twist()
     cmd.linear.x=linear_velocity_x
@@ -20,13 +20,11 @@ def callback(request):
     ##Turn around
     if dire==2:
         cmd.angular.z=angular_velocity_z
-        rospy.loginfo("Turn commence")
         for i in range(50):
              pub.publish(cmd)
              rate.sleep()
         cmd=Twist()
         pub.publish(cmd)
-        rospy.loginfo("Turn end")
         response=dirturnResponse()
         response.success=True
         return response
