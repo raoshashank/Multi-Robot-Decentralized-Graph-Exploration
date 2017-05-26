@@ -34,7 +34,6 @@ def callback2(msg):
 ###now that Diff drive bot is used,P-Controller to be used for all motions.
 def go_forward():
     global cmd
-    global sub
     global angular_velocity_z
     global linear_velocity_x
     cmd=Twist()
@@ -47,6 +46,8 @@ def go_forward():
 
 
 def callback(msg):
+    global cmd
+    global data
     data=msg.ranges
     #go_forward()
     ###find maximas:
@@ -54,13 +55,17 @@ def callback(msg):
     ###slice the ranges array into 3 regions for 3 directions:;left,forward and right
     left_slice=np.asarray(data[710:720])
     left_avg=left_slice.sum()/len(left_slice)
+    
     mid_slice=np.asarray(data[355:365])
     mid_avg=mid_slice.sum()/len(mid_slice)
+    
     right_slice=np.asarray(data[0:10])
     right_avg=right_slice.sum()/len(right_slice)
+    
     check=[left_avg,mid_avg,right_avg]
     rospy.loginfo("Values i found are:"+str(check))    
     count=0
+    
     ###Check for node position###
     for i in check:
         if i>5:
@@ -163,7 +168,7 @@ heading=0.0
 
 interval_for_angle_measurement=10
 
-linear_velocity_x=0.3
+linear_velocity_x=0.1
 angular_velocity_z=0
 
 rate=rospy.Rate(10)
