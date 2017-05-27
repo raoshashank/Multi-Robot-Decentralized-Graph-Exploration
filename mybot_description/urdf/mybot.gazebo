@@ -42,9 +42,15 @@
         <scan>
           <horizontal>
             <samples>720</samples>
+<<<<<<< HEAD
             <resolution>1</resolution>
             <min_angle>-2.35619</min_angle>
             <max_angle>2.35619</max_angle>
+=======
+            <resolution></resolution>
+            <min_angle>-1.74533</min_angle>
+            <max_angle>1.74533</max_angle>
+>>>>>>> b9981846a1775461dc764e0792a40e9efd797208
           </horizontal>
         </scan>
         <range>
@@ -60,7 +66,7 @@
         </noise>
       </ray>
       <plugin name="gazebo_ros_head_hokuyo_controller" filename="libgazebo_ros_laser.so">
-        <topicName>/mybot/laser/scan</topicName>
+        <topicName>laser/scan</topicName>
         <frameName>hokuyo</frameName>
       </plugin>
     </sensor>
