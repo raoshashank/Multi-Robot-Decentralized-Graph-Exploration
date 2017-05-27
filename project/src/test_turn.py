@@ -11,45 +11,12 @@ flag=0
 heading_cmd=0
 q=[]
 heading=0
+heading_error=0
 feedback=Odometry()
-"""
-def callback(msg):
-    global flag
-    global final_angle_lower
-    global final_angle_upper
-    global initial_angle
-    if flag==0:
-        ##set initial position
-        initial_angle=2*asin(msg.pose.pose.orientation.z)
-        rospy.loginfo("initial pose:"+str(initial_angle))
-        flag=1
-        final_angle_lower=initial_angle+(pi/2)+deltarate
-        rospy.loginfo(final_angle_lower)
-       # final_orientation_lower=sin(final_angle_lower/2)
-        final_angle_upper=initial_angle+(pi/2)-delta
-        rospy.loginfo(final_angle_upper)
-        #final_orientation_upper=(final_angle_upper/2)
-    ori=2*asin(msg.pose.pose.orientation.z)
-        
-    if ori>final_angle_lower or ori<final_angle_upper:
-        cmd.angular.z=0
-        pub.publish(cmd)
-        rospy.loginfo("done!")
-        return 0
-    else:
-        rospy.loginfo(ori)
-        pub.publish(cmd)
-        rate.sleep()
-        
-    #rospy.loginfo("orientation now:"+str(2*asin(msg.pose.pose.orientation.z)))
- """
+
 ###using quaternion info:
 def turn():
-    global flag,feedback
-    global heading_cmd
-    global heading
-    global q
-    global cmd
+    global flag,feedback,heading_cmd,heading,q,cmd 
     q=[0,0,0,0]
     cmd=Twist()
     q[0]=feedback.pose.pose.orientation.w
@@ -80,18 +47,27 @@ def turn():
 def callback(msg):
     global feedback
     feedback=msg
-    turn()
+    
         
 
+def service_callback(request):
+    global heading_error
+    global cmd,pub
+    turn()
+    if heading_error<0.001:
+        cmd.linear.x=0
+        cmd.angular.z=0
+        pub.publish(cmd)
+        return EmptyResponse
 
 
 rospy.init_node('test_node')
 rate=rospy.Rate(20)
 pub=rospy.Publisher('/bot_0/cmd_vel',Twist,queue_size=1)
-#cmd=Twist()
-#cmd.angular.z=pi/10
-#delta=0.002
+heading_error=0
 sub=rospy.Subscriber('/bot_0/odom',Odometry,callback)
-rospy.spin()
+while not rospy.is_shutdown():  
+    rospy.Service('/test_turn_service',Empty,service_callback)
+    rospy.spin()
 
 
