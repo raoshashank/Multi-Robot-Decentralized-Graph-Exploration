@@ -38,7 +38,7 @@ def go_forward():
     #rate.sleep()
     pub.publish(cmd)
  
-    
+
 
 
 def callback(msg):
@@ -48,6 +48,7 @@ def callback(msg):
     ###find maximas:
     ###check in 3 directions for the free space
     ###slice the ranges array into 3 regions for 3 directions:;left,forward and right
+
     left_slice=np.asarray(data[700:720])
     left_avg=left_slice.sum()/len(left_slice)
     
@@ -79,6 +80,7 @@ def callback(msg):
         deci=servcaller(params)
         decision=deci.response
         rospy.loginfo(decision)
+        
         """
         if decision=="R":
             ###call turn_service_caller with param 0
@@ -100,68 +102,17 @@ def callback(msg):
     elif count==0:
        rospy.loginfo("I'm at end node!")
        ###Call turn_service_caller with param 2
-       params2=dirturnRequest()
-       params2.dir=2
-       status=servcaller2(params2)
-       flag=0
-       rospy.loginfo(str(status))
+       turn
+       #params2=dirturnRequest()
+       #params2.dir=2
+       #status=servcaller2(params2)
+       #flag=0
+       #rospy.loginfo(str(status))
     else:
        go_forward()
        rospy.loginfo("Going Forward")
         
-
-   
-"""
-        while True:
-            i=randint(0,2)
-            if check[i]>3:
-                break
-
-        rospy.loginfo("Value of i is : "+str(i))
-    
-        if i==0:
-            rospy.loginfo("Turning left")
-            #turn(1)
-
-        elif i==1:
-            rospy.loginfo("going forward")
-            go_forward()
-        elif i==2:
-            rospy.loginfo("Turning Right")
-            #turn(0)
-    else:
-        go_forward()
-"""
-""" 
-    if left_avg>3:
-        ###turn left and move the bot
-        rospy.loginfo("i will turn left!")
-        turn(1)
-    else:
-         if right_avg>3:
-             rospy.loginfo("I will turn right!")
-             turn(0)
-
-         else:
-             if mid_avg>3:
-                 rospy.loginfo("I need to go straight!")
-                 go_forward()
-             else :
-                 rospy.loginfo("need to turn around")               
-                 turn_around()
-"""                   
-"""
-   The three angles for checking are : (-100:-80),(-10,10),(80,100)
-   so array indexes for these angles in the case of husky robot for 
-   a -135 to 135 angle coverage is :(100,150),(340,380),(520,560) 
- """
-
-
-
-    
-    
-
-
+        
 if  __name__ == "__main__":
     rospy.init_node('random_mover',anonymous=False)   
     
@@ -169,7 +120,7 @@ if  __name__ == "__main__":
     flag=0
     initial_heading=0.0 
     heading_error=0.0
-    heading=0.0   
+    heading=0.0  
     interval_for_angle_measurement=10
     linear_velocity_x=0.1
     angular_velocity_z=0

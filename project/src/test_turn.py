@@ -11,7 +11,7 @@ flag=0
 heading_cmd=0
 q=[]
 heading=0
-
+feedback=Odometry()
 """
 def callback(msg):
     global flag
@@ -44,24 +44,24 @@ def callback(msg):
     #rospy.loginfo("orientation now:"+str(2*asin(msg.pose.pose.orientation.z)))
  """
 ###using quaternion info:
-def callback(msg):
-    global flag
+def turn():
+    global flag,feedback
     global heading_cmd
     global heading
     global q
     global cmd
     q=[0,0,0,0]
     cmd=Twist()
-    q[0]=msg.pose.pose.orientation.w
-    q[1]=msg.pose.pose.orientation.x
-    q[2]=msg.pose.pose.orientation.y
-    q[3]=msg.pose.pose.orientation.z  
+    q[0]=feedback.pose.pose.orientation.w
+    q[1]=feedback.pose.pose.orientation.x
+    q[2]=feedback.pose.pose.orientation.y
+    q[3]=feedback.pose.pose.orientation.z  
     heading=atan2(2*(q[0]*q[3]+q[1]*q[2]),1-2*(q[2]*q[2]+q[3]*q[3]))
     
     if flag==0:
         flag=1
         initial_heading=heading
-        heading_cmd=initial_heading-(pi/2)
+        heading_cmd=initial_heading+pi
     
     
     heading_error=heading_cmd-heading
@@ -75,7 +75,13 @@ def callback(msg):
 
     if heading_error < 0.001:
         rospy.loginfo("Turn done!")
-        return EmptyResponse
+
+
+def callback(msg):
+    global feedback
+    feedback=msg
+    turn()
+        
 
 
 
