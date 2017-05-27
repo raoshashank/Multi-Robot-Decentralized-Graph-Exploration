@@ -31,6 +31,7 @@
  <gazebo reference="right_wheel">
       <material>Gazebo/Black</material>
     </gazebo>
+
  <!-- hokuyo -->
  <gazebo reference="hokuyo">
     <sensor type="ray" name="head_hokuyo_sensor">
@@ -41,9 +42,9 @@
         <scan>
           <horizontal>
             <samples>720</samples>
-            <resolution>0.375</resolution>
-            <min_angle>-1.5708</min_angle>
-            <max_angle>1.5708</max_angle>		
+            <resolution></resolution>
+            <min_angle>-1.74533</min_angle>
+            <max_angle>1.74533</max_angle>
           </horizontal>
         </scan>
         <range>
@@ -53,7 +54,7 @@
         </range>
         <noise>
           <type>gaussian</type>
-     
+          
           <mean>0.0</mean>
           <stddev>0.01</stddev>
         </noise>

@@ -9,7 +9,7 @@
   <arg name="debug" default="false"/>
   
   <include file="$(find gazebo_ros)/launch/empty_world.launch">
-    <arg name="world_name" value="$(find mybot_gazebo)/worlds/test_world"/>
+    <arg name="world_name" value="$(find mybot_gazebo)/worlds/test.world"/>
     <arg name="paused" value="$(arg paused)"/>
     <arg name="use_sim_time" value="$(arg use_sim_time)"/>
     <arg name="gui" value="$(arg gui)"/>
@@ -22,11 +22,5 @@
 
 
   <node name="bot_0" pkg="gazebo_ros" type="spawn_model" output="screen"
-   args="-urdf -param robot_description -model mybot0 -namespace bot_0" />
-
-
-<!--
-  <node name="bot_1" pkg="gazebo_ros" type="spawn_model" output="screen"
-   args="-urdf -param robot_description -model mybot2 -x 3 -y 3 -z 0 -Y 1.57  -namespace bot_1"/>
--->
+   args="-urdf -param robot_description -model mybot0  -namespace bot_0" />
 </launch>

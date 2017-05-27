@@ -6,9 +6,7 @@ from math import pi,atan2
 from random import randint
 import numpy as np
 from nav_msgs.msg import Odometry
-from project.srv import direction,directionRequest,directionResponse
-from project.srv import dirturn,dirturnRequest,dirturnResponse
-
+from project.srv import direction,directionRequest,directionResponse,dirturn,dirturnRequest,dirturnResponse 
 
 def callback2(msg):
     global feedback
@@ -44,7 +42,7 @@ def go_forward():
 
 
 def callback(msg):
-    global cmd,data,flag
+    global cmd,data,flag,servcaller,servcaller2
     data=msg.ranges
     #go_forward()
     ###find maximas:
@@ -80,6 +78,8 @@ def callback(msg):
         params2=dirturnRequest()
         deci=servcaller(params)
         decision=deci.response
+        rospy.loginfo(decision)
+        """
         if decision=="R":
             ###call turn_service_caller with param 0
             params2.dir=0
@@ -89,14 +89,14 @@ def callback(msg):
         elif decision=="L":
             ###call turn_service_caller with param 1
             params2.dir=1
-            #status=servcaller2(params2)
+             #status=servcaller2(params2)
             flag=0
             rospy.loginfo("L")
             ##keep going forward
         #elif decision=="F":
          #   go_forward()
           #  rospy.loginfo("Going Forward")
-        
+        """
     elif count==0:
        rospy.loginfo("I'm at end node!")
        ###Call turn_service_caller with param 2
@@ -157,25 +157,14 @@ def callback(msg):
  """
 
 
-def main_function():
+
     
-    ##Service1 for deciding direction
-    #rospy.wait_for_service('/direction_service_server')
-    servcaller=rospy.ServiceProxy('/direction_service_server',direction)        
     
-    #Service2 for turning in the decided direction
-    #rospy.wait_for_service('/turn_service_server')
-    servcaller2=rospy.ServiceProxy('/turn_service_server',dirturn)
-    
-    sub_odom=rospy.Subscriber('/bot_0/odom',Odometry,callback2)
-    #rate.sleep()
-    
-    sub=rospy.Subscriber('/bot_0/laser/scan',LaserScan,callback)
-    rospy.spin()
 
 
 if  __name__ == "__main__":
     rospy.init_node('random_mover',anonymous=False)   
+    
     q=[0,0,0,0]
     flag=0
     initial_heading=0.0 
@@ -184,10 +173,24 @@ if  __name__ == "__main__":
     interval_for_angle_measurement=10
     linear_velocity_x=0.1
     angular_velocity_z=0
+    
     rate=rospy.Rate(20)
+    
     odom=Odometry()
     data=LaserScan()
     feedback=Odometry()
     cmd=Twist()
+    
+    ##Service1 for deciding direction
+    rospy.wait_for_service('/direction_service_server')
+    servcaller=rospy.ServiceProxy('/direction_service_server',direction)        
+    
+    #Service2 for turning in the decided direction
+    rospy.wait_for_service('/turn_service_server')
+    servcaller2=rospy.ServiceProxy('/turn_service_server',dirturn)
+    
+    sub_odom=rospy.Subscriber('/bot_0/odom',Odometry,callback2)
     pub=rospy.Publisher('/bot_0/cmd_vel',Twist,queue_size=1)
-    main_function()
+    
+    sub=rospy.Subscriber('/bot_0/laser/scan',LaserScan,callback)
+    rospy.spin()
