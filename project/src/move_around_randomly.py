@@ -42,7 +42,7 @@ def go_forward():
 
 
 def callback(msg):
-    global cmd,data,flag,servcaller,servcaller2
+    global cmd,data,flag,servcaller,servcaller2,turn_done
     data=msg.ranges
     #go_forward()
     ###find maximas:
@@ -73,39 +73,31 @@ def callback(msg):
         pub.publish(cmd)
         #rate.sleep()        
         ##params for service1
-        params=directionRequest()
         params.check=check
         #param for service2
-        params2=dirturnRequest()
-        deci=servcaller(params)
-        decision=deci.response
+        decision=servcaller(params).response
         rospy.loginfo(decision)
         
-        """
+        
         if decision=="R":
-            ###call turn_service_caller with param 0
-            params2.dir=0
-            #status=servcaller2(params2)
-            flag=0
+            #call turn_service_caller with param 0
+            params2.angle=pi/2
+            servcaller2(params2)
+            #flag=0
             rospy.loginfo("R")
         elif decision=="L":
-            ###call turn_service_caller with param 1
-            params2.dir=1
-             #status=servcaller2(params2)
-            flag=0
+            #call turn_service_caller with param 1
+            params2.angle=-pi/2
+            servcaller2(params2)
+            #flag=0
             rospy.loginfo("L")
-            ##keep going forward
-        #elif decision=="F":
-         #   go_forward()
-          #  rospy.loginfo("Going Forward")
-        """
-    elif count==0:
+            
+        
+    elif count==0 and mid_avg<0.5:
        rospy.loginfo("I'm at end node!")
        ###Call turn_service_caller with param 2
-       turn
-       #params2=dirturnRequest()
-       #params2.dir=2
-       #status=servcaller2(params2)
+       params2.angle=pi
+       servcaller2(params2)
        #flag=0
        #rospy.loginfo(str(status))
     else:
@@ -124,9 +116,10 @@ if  __name__ == "__main__":
     interval_for_angle_measurement=10
     linear_velocity_x=0.1
     angular_velocity_z=0
-    
+    params=directionRequest()
+    params2=dirturnRequest()
     rate=rospy.Rate(20)
-    
+    turn_done=0
     odom=Odometry()
     data=LaserScan()
     feedback=Odometry()

@@ -1,3 +1,2 @@
-int32 dir
+float64 angle
 ---
-bool success

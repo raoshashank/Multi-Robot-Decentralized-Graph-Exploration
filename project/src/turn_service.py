@@ -1,57 +1,74 @@
 #!/usr/bin/env python
 import rospy
-from geometry_msgs.msg import Twist
-from math import pi
 from project.srv import dirturn,dirturnRequest,dirturnResponse
+from math import pi,atan2
+from geometry_msgs.msg import Twist
+from nav_msgs.msg import Odometry
+from math import pi,asin,sin
+flag=0
+heading_cmd=0
+q=[]
+heading=0
+heading_error=0
+feedback=Odometry()
+done=0
+angle=0
 
-###Need to accurately turn by 90deg
-def go_forward():
+def turn():
+    global flag,feedback,heading_cmd,heading,q,cmd ,done,angle
+    q=[0,0,0,0]
     cmd=Twist()
-    cmd.linear.x=linear_velocity_x
-    pub.publish(cmd)
-    rate.sleep()
-    cmd=Twist()
-    pub.publish(cmd)
-
-def callback(request):
-    dire=request.dir
-    cmd=Twist()
-    response=dirturnResponse()
-    ##Turn around
-    if dire==2:
-        cmd.angular.z=angular_velocity_z
-        for i in range(50):
-             pub.publish(cmd)
-             rate.sleep()
-        cmd=Twist()
-        pub.publish(cmd)
-        response=dirturnResponse()
-        response.success=True
-        return response
+    q[0]=feedback.pose.pose.orientation.w
+    q[1]=feedback.pose.pose.orientation.x
+    q[2]=feedback.pose.pose.orientation.y
+    q[3]=feedback.pose.pose.orientation.z  
+    heading=atan2(2*(q[0]*q[3]+q[1]*q[2]),1-2*(q[2]*q[2]+q[3]*q[3]))
     
-    elif dire==1: ##left turn
-        cmd.angular.z=angular_velocity_z
-    elif dire==0:##Right turn
-        cmd.angular.z=-1*angular_velocity_z
-    rospy.loginfo("Turn commence")
-    for i in range(13):
+    if flag==0:
+        flag=1
+        initial_heading=heading
+        heading_cmd=initial_heading+angle
+    
+    
+    heading_error=heading_cmd-heading
+    rospy.loginfo(heading_error)
+
+    if heading_error>pi:
+        heading_error=heading_error-2*pi
+    if heading_error<=-pi:
+        heading_error=heading_error+2*pi
+    
+    
+    if abs(heading_error) < 0.001:
+        rospy.loginfo("Turn done!")
+        done=1
+    else:
+        cmd.angular.z=-0.8*heading_error
         pub.publish(cmd)
-        rate.sleep()
-    cmd=Twist()
-    pub.publish(cmd)
-    rospy.loginfo("Turn end")
-    for i in range(15):
-        go_forward()
-    response=dirturnResponse()
-    response.success=True
-    return response
+        rospy.loginfo(heading_error)
 
+def callback(msg):
+    global feedback
+    global angle
+    feedback=msg
+    
+def service_callback(request):
+    global angle
+    global done
+    angle=request.angle
 
-rospy.init_node('turn_service_node')
-angular_velocity_z=pi/4
-linear_velocity_x=0.4
-rate=rospy.Rate(5)
+    while  done==0:
+        turn()
+        
+    done=0     
+    flag=0
+    return dirturnResponse()
+
+rospy.init_node('service_client')
+rate=rospy.Rate(20)
 pub=rospy.Publisher('/bot_0/cmd_vel',Twist,queue_size=1)
+heading_error=0
+sub=rospy.Subscriber('/bot_0/odom',Odometry,callback)
 while not rospy.is_shutdown():
-    rospy.Service("/turn_service_server",dirturn,callback)
+    my_service=rospy.Service('/turn_service_server',dirturn,service_callback)
     rospy.spin()

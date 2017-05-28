@@ -4,8 +4,6 @@ from math import pi,atan2
 from geometry_msgs.msg import Twist
 from nav_msgs.msg import Odometry
 from math import pi,asin,sin
-from std_srvs.srv import EmptyRequest,Empty,EmptyResponse
-
 ##try closed loop control by checking odometry information 
 flag=0
 heading_cmd=0
@@ -47,18 +45,9 @@ def turn():
 def callback(msg):
     global feedback
     feedback=msg
-    
+    turn()
         
 
-def service_callback(request):
-    global heading_error
-    global cmd,pub
-    turn()
-    if heading_error<0.001:
-        cmd.linear.x=0
-        cmd.angular.z=0
-        pub.publish(cmd)
-        return EmptyResponse
 
 
 rospy.init_node('test_node')
@@ -66,8 +55,6 @@ rate=rospy.Rate(20)
 pub=rospy.Publisher('/bot_0/cmd_vel',Twist,queue_size=1)
 heading_error=0
 sub=rospy.Subscriber('/bot_0/odom',Odometry,callback)
-while not rospy.is_shutdown():  
-    rospy.Service('/test_turn_service',Empty,service_callback)
-    rospy.spin()
+rospy.spin()
 
 
