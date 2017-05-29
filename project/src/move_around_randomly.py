@@ -12,7 +12,7 @@ from project.srv import direction,directionRequest,directionResponse,dirturn,dir
 
 #To move forward to enter corridoor after turn
 def escape_turn():
-    global check
+    global check,turn_done
     
     ##condition to enter the next corridor
     while check[0]>5 or check[2]>5:
@@ -20,10 +20,6 @@ def escape_turn():
         go_forward()
     turn_done=0
         
-             
-    
-    
-
 def go_forward():
     global q,cmd,feedback,flag,rate
     global heading,initial_heading,heading_error 
@@ -41,7 +37,7 @@ def go_forward():
         heading_error=heading_error-2*pi
     if heading_error<=-pi:
         heading_error=heading_error+2*pi
-    angular_velocity_z=-0.8*heading_error
+    angular_velocity_z=-0.9*heading_error
     cmd=Twist()
     cmd.linear.x=linear_velocity_x
     cmd.angular.z=angular_velocity_z
@@ -111,8 +107,8 @@ def main():
                     params2.angle=-pi/2
                     servcaller2(params2)
                     flag=0
-                    escape_turn()
                     turn_done=1
+                    escape_turn()
                     rospy.loginfo("R")
                     
                     

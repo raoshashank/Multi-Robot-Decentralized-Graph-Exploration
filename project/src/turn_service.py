@@ -5,15 +5,7 @@ from math import pi,atan2
 from geometry_msgs.msg import Twist
 from nav_msgs.msg import Odometry
 from math import pi,asin,sin
-flag=0
-heading_cmd=0
-q=[]
-heading=0
-heading_error=0
-feedback=Odometry()
-initial_heading=0
-done=0
-angle=0
+
 
 def turn():
     global flag,feedback,heading_cmd,heading,q,cmd ,done,angle,initial_heading,heading_error
@@ -64,6 +56,15 @@ def service_callback(request):
     flag=0
     return dirturnResponse()
 
+flag=0
+heading_cmd=0
+q=[]
+heading=0
+heading_error=0
+feedback=Odometry()
+initial_heading=0
+done=0
+angle=0
 rospy.init_node('service_client')
 rate=rospy.Rate(20)
 pub=rospy.Publisher('/bot_0/cmd_vel',Twist,queue_size=1)
