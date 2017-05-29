@@ -15,7 +15,7 @@ def escape_turn():
     global check
     
     ##condition to enter the next corridor
-    while check[0]>5 or check[2]>5:
+    while True:
         rospy.loginfo("Escaping..")
         go_forward()
     turn_done=0
@@ -74,57 +74,56 @@ def callback(msg):
     right_avg=right_slice.sum()/len(right_slice)
     
     check=[left_avg,mid_avg,right_avg]
-    #rospy.loginfo("Values i found are:"+str(check))    
+    rospy.loginfo("Values i found are:"+str(check))    
     
 
 
 
 def main():
     global cmd,data,flag,servcaller,servcaller2,turn_done,check,mid_avg,params,params2
-    while not rospy.is_shutdown():
-        if check!=[]:
-            count=0
-            ###Check for node position###
-            for i in check:
-                if i>5:
-                    count+=1
+    while not rospy.is_shutdown() and check!=[]:
+        count=0
+        ###Check for node position###
+        for i in check:
+            if i>5:
+                count+=1
     
-            if count>=2 :
-                rospy.loginfo("I'M AT NODE!")        
-                
-                cmd=Twist()
-                pub.publish(cmd)
+        if count>=2 :
+            rospy.loginfo("I'M AT NODE!")        
+            
+            cmd=Twist()
+            pub.publish(cmd)
 
-                params.check=check
-                decision=servcaller(params).response
-                rospy.loginfo(turn_done)
-                if decision=="L" and turn_done==0:
-                    #call turn_service_caller with param 0
-                    params2.angle=pi/2
-                    servcaller2(params2)
-                    flag=0
-                    turn_done=1
-                    escape_turn()          
-                    rospy.loginfo("L")
-                elif decision=="R" and turn_done==0:
-                    #call turn_service_caller with param 1
-                    params2.angle=-pi/2
-                    servcaller2(params2)
-                    flag=0
-                    escape_turn()
-                    turn_done=1
-                    rospy.loginfo("R")
-                    
-                    
-            elif count==0 and mid_avg<0.5:
-                rospy.loginfo("I'm at end node!")
-                ###Call turn_service_caller with param 2
-                params2.angle=pi
+            params.check=check
+            decision=servcaller(params).response
+            
+            if decision=="R" and turn_done==0:
+                #call turn_service_caller with param 0
+                params2.angle=pi/2
                 servcaller2(params2)
                 flag=0
+                turn_done=1
+                escape_turn()          
+                rospy.loginfo("R")
+            elif decision=="L" and turn_done==0:
+                #call turn_service_caller with param 1
+                params2.angle=-pi/2
+                servcaller2(params2)
+                flag=0
+                escape_turn()
+                turn_done=1
+                rospy.loginfo("L")
+                
+        
+        elif count==0 and mid_avg<0.5:
+            rospy.loginfo("I'm at end node!")
+            ###Call turn_service_caller with param 2
+            params2.angle=pi
+            servcaller2(params2)
+            flag=0
             
-            else:
-                go_forward()
+        else:
+            go_forward()
        
         
 
