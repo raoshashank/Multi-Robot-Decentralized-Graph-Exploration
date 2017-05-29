@@ -11,11 +11,12 @@ q=[]
 heading=0
 heading_error=0
 feedback=Odometry()
+initial_heading=0
 done=0
 angle=0
 
 def turn():
-    global flag,feedback,heading_cmd,heading,q,cmd ,done,angle
+    global flag,feedback,heading_cmd,heading,q,cmd ,done,angle,initial_heading,heading_error
     q=[0,0,0,0]
     cmd=Twist()
     q[0]=feedback.pose.pose.orientation.w
@@ -49,12 +50,11 @@ def turn():
 
 def callback(msg):
     global feedback
-    global angle
     feedback=msg
     
 def service_callback(request):
-    global angle
-    global done
+    global angle,done,flag
+    
     angle=request.angle
 
     while  done==0:
@@ -67,7 +67,6 @@ def service_callback(request):
 rospy.init_node('service_client')
 rate=rospy.Rate(20)
 pub=rospy.Publisher('/bot_0/cmd_vel',Twist,queue_size=1)
-heading_error=0
 sub=rospy.Subscriber('/bot_0/odom',Odometry,callback)
 while not rospy.is_shutdown():
     my_service=rospy.Service('/turn_service_server',dirturn,service_callback)

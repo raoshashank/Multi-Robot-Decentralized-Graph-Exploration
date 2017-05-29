@@ -12,6 +12,19 @@ def callback2(msg):
     global feedback
     feedback=msg
 
+#To move forward to enter corridoor after turn
+def escape_turn():
+    global check
+    turn_done=1
+    ##condition to enter the next corridor
+    while True:
+        rospy.loginfo("Escaping..")
+        go_forward()
+        
+        
+             
+    
+    
 
 ###now that Diff drive bot is used,P-Controller to be used for all motions.
 def go_forward():
@@ -37,7 +50,7 @@ def go_forward():
     cmd.angular.z=angular_velocity_z
     #rate.sleep()
     pub.publish(cmd)
- 
+    rospy.loginfo("Going Forward")
 
 
 
@@ -76,20 +89,24 @@ def callback(msg):
         params.check=check
         #param for service2
         decision=servcaller(params).response
-        rospy.loginfo(decision)
+       # rospy.loginfo(decision)
         
         
-        if decision=="R":
+        if decision=="R" and turn_done==0:
             #call turn_service_caller with param 0
             params2.angle=pi/2
             servcaller2(params2)
-            #flag=0
+            flag=0
+            turn_done=1
+            escape_turn()          
             rospy.loginfo("R")
-        elif decision=="L":
+        elif decision=="L" and turn_done==0:
             #call turn_service_caller with param 1
             params2.angle=-pi/2
             servcaller2(params2)
-            #flag=0
+            flag=0
+            escape_turn()
+            turn_done=1
             rospy.loginfo("L")
             
         
@@ -98,11 +115,11 @@ def callback(msg):
        ###Call turn_service_caller with param 2
        params2.angle=pi
        servcaller2(params2)
-       #flag=0
-       #rospy.loginfo(str(status))
+       flag=0
+    
     else:
        go_forward()
-       rospy.loginfo("Going Forward")
+       
         
         
 if  __name__ == "__main__":
@@ -110,9 +127,11 @@ if  __name__ == "__main__":
     
     q=[0,0,0,0]
     flag=0
+    turn_done=0
     initial_heading=0.0 
     heading_error=0.0
     heading=0.0  
+    check=[]
     interval_for_angle_measurement=10
     linear_velocity_x=0.1
     angular_velocity_z=0
