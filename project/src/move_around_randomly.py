@@ -8,8 +8,6 @@ import numpy as np
 from nav_msgs.msg import Odometry
 from project.srv import direction,directionRequest,directionResponse,dirturn,dirturnRequest,dirturnResponse 
 
-
-
 #To move forward to enter corridoor after turn
 def escape_turn():
     global check,turn_done
@@ -112,7 +110,7 @@ def main():
                     rospy.loginfo("R")
                     
                     
-            elif count==0 and mid_avg<0.5:
+            elif count==0 and mid_avg<1:
                 rospy.loginfo("I'm at end node!")
                 ###Call turn_service_caller with param 2
                 params2.angle=pi

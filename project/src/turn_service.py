@@ -6,7 +6,6 @@ from geometry_msgs.msg import Twist
 from nav_msgs.msg import Odometry
 from math import pi,asin,sin
 
-
 def turn():
     global flag,feedback,heading_cmd,heading,q,cmd ,done,angle,initial_heading,heading_error
     q=[0,0,0,0]
@@ -32,7 +31,7 @@ def turn():
         heading_error=heading_error+2*pi
     
     
-    if abs(heading_error) < 0.001:
+    if abs(heading_error) < 0.0001:
         rospy.loginfo("Turn done!")
         done=1
     else:
