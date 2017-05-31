@@ -10,20 +10,13 @@ from project.srv import direction,directionRequest,directionResponse,dirturn,dir
 
 #To move forward to enter corridoor after turn
 def escape_turn():
-    global check,turn_done,range_thresh
+    global check,turn_done,range_thresh,chk0,chk2
     
-    temp=0
-    chk0=temp
-    chk2=temp
-    if temp==0:
-        chk0=check[0]
-        chk2=check[2]
-
+    
     rospy.loginfo("chk0="+str(chk0)+" check[0]="+str(check[0]))
     while check[0]>chk0 or check[2]>chk2:
-        rospy.loginfo(str(check[0]))
+        rospy.loginfo(str(chk0))
         #rospy.loginfo("Escaping..")
-        temp=1
         go_forward()
 
     turn_done=0
@@ -84,7 +77,7 @@ def callback(msg):
 
 
 def main():
-    global cmd,data,flag,servcaller,servcaller2,turn_done,check,mid_avg,params,params2
+    global cmd,data,flag,servcaller,servcaller2,turn_done,check,mid_avg,params,params2,chk0,chk2
     while not rospy.is_shutdown():
         if check!=[]:
             count=0
@@ -98,7 +91,8 @@ def main():
                 
                 cmd=Twist()
                 pub.publish(cmd)
-
+                chk0=check[0]
+                chk2=check[2]
                 params.check=check
                 decision=servcaller(params).response
                 rospy.loginfo(decision)
@@ -157,6 +151,8 @@ if  __name__ == "__main__":
     cmd=Twist()
     mid_avg=0
     range_thresh=3
+    chk0=0
+    chk2=0
     
     ##Service1 for deciding direction
     rospy.wait_for_service('/direction_service_server')
