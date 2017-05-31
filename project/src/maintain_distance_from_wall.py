@@ -11,12 +11,8 @@ def callback2(msg):
 
 def stay_away():
     global feedback,left_distance,right_distance,pub,cmd_vel_cmd
-    if left_distance<threshold and left_distance!=0:
-        cmd_vel_cmd.angular.z+=-0.1*(left_distance-threshold)
-        rospy.loginfo("Left:"+str(left_distance))
-    elif right_distance<threshold and right_distance!=0:
-        cmd_vel_cmd.angular.z+=0.1*(right_distance-threshold)
-        rospy.loginfo("Right:"+str(right_distance))
+    diff=left_distance-right_distance
+    cmd_vel_cmd.angular.z+=0.001*diff
     pub.publish(cmd_vel_cmd)
     
 

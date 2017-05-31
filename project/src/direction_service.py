@@ -8,7 +8,7 @@ rospy.init_node("direction_service_node")
 
 
 def callback(request):
-    rospy.loginfo("Entered Service Callback")
+    #rospy.loginfo("Entered Service Callback")
     check=request.check
     resp=directionResponse()
     
@@ -21,7 +21,7 @@ def callback(request):
     #rospy.loginfo("Value of i is : "+str(i))
     
     if i==0:
-      # rospy.loginfo("Turning Left")
+       rospy.loginfo("Turning Left")
        resp.response="L"
 
     elif i==1:
@@ -35,7 +35,7 @@ def callback(request):
 
 
 
-range_threshold=3
+range_threshold=1
 while not rospy.is_shutdown():
     rospy.Service('/direction_service_server',direction,callback)
     rospy.spin()

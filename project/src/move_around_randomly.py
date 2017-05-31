@@ -10,12 +10,22 @@ from project.srv import direction,directionRequest,directionResponse,dirturn,dir
 
 #To move forward to enter corridoor after turn
 def escape_turn():
-    global check,turn_done
+    global check,turn_done,range_thresh
     
-    ##condition to enter the next corridor
-    while check[0]>5 or check[2]>5:
-        rospy.loginfo("Escaping..")
+    temp=0
+    chk0=temp
+    chk2=temp
+    if temp==0:
+        chk0=check[0]
+        chk2=check[2]
+
+    rospy.loginfo("chk0="+str(chk0)+" check[0]="+str(check[0]))
+    while check[0]>chk0 or check[2]>chk2:
+        rospy.loginfo(str(check[0]))
+        #rospy.loginfo("Escaping..")
+        temp=1
         go_forward()
+
     turn_done=0
         
 def go_forward():
@@ -41,7 +51,7 @@ def go_forward():
     cmd.angular.z=angular_velocity_z
     #rate.sleep()
     pub.publish(cmd)
-    rospy.loginfo("Going Forward")
+    #rospy.loginfo("Going Forward")
 
 
 
@@ -80,7 +90,7 @@ def main():
             count=0
             ###Check for node position###
             for i in check:
-                if i>5:
+                if i>range_thresh:
                     count+=1
     
             if count>=2 :
@@ -91,7 +101,7 @@ def main():
 
                 params.check=check
                 decision=servcaller(params).response
-                rospy.loginfo(turn_done)
+                rospy.loginfo(decision)
                 if decision=="L" and turn_done==0:
                     #call turn_service_caller with param 0
                     params2.angle=pi/2
@@ -110,7 +120,7 @@ def main():
                     rospy.loginfo("R")
                     
                     
-            elif count==0 and mid_avg<1:
+            elif count==0 and mid_avg<range_thresh:
                 rospy.loginfo("I'm at end node!")
                 ###Call turn_service_caller with param 2
                 params2.angle=pi
@@ -146,6 +156,7 @@ if  __name__ == "__main__":
     feedback=Odometry()
     cmd=Twist()
     mid_avg=0
+    range_thresh=3
     
     ##Service1 for deciding direction
     rospy.wait_for_service('/direction_service_server')
