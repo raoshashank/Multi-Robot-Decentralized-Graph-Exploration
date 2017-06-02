@@ -4,6 +4,7 @@ from project.srv import direction,directionRequest,directionResponse
 from project.srv import dirturn,dirturnRequest,dirturnResponse
 from random import randint
 
+
 rospy.init_node("direction_service_node")
 
 
@@ -11,7 +12,17 @@ def callback(request):
     #rospy.loginfo("Entered Service Callback")
     check=request.check
     resp=directionResponse()
+"""
     
+
+
+
+
+
+
+
+
+"""    
     ###Choosing which direction to go...Currently threshold of 3 metres
     while True:
             i=randint(0,2)

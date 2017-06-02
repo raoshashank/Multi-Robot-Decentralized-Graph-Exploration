@@ -7,6 +7,8 @@ from random import randint
 import numpy as np
 from nav_msgs.msg import Odometry
 from project.srv import direction,directionRequest,directionResponse,dirturn,dirturnRequest,dirturnResponse 
+from project import vertex
+from project.msg import vertex_info
 
 def escape_turn(initial):
     global data,check,feedback
@@ -21,19 +23,45 @@ def escape_turn(initial):
             il=i
     
     dist=left_minima*cos(il*0.00655)
-    if data[0]>data[719]:
-        while feedback.pose.pose.position.x>(initial+dist):
+    
+    while feedback.pose.pose.position.x>(initial+dist):
             go_forward()
+        
+    if data[0]>data[719]:
+        x=
+        
+        
     else:
-        
+    
     
 
-    
+"""    
+def callback_vertex(msg):
+    global vertices
+    vertices=msg
+"""        
+"""
+Problems:
+1.Please Let me use Constant Lane Width!!
+2.Incidence to Adjacency
+3.Path to next vertex
 
-    
-    
-        
 
+Steps:
+1.Subscribe to vertex topic that stores info about all the identified vertices as an array of vertex class objects
+2.@node,check if coordinates correspond to vertex position of any vertex in the array
+    Checking coordinates is by using ekf filter to get coordinates from odometry data of robot
+    2a.if yes then extract the vertex and go to 3
+    2b.else find edges connected to vertex(basically angles of edges connected) 
+       initialise a vertex with current coordinates and go to 3
+
+3.run merge_matrix algorithm
+4.run Order_matrix algorithm
+5.Select last edge of In() as next edge for traversal
+6.Use "adjacency matrix" to get next path to traverse to next edge
+7.Traverse to The next Edge
+
+""" 
 
 def go_forward():
     global q,cmd,feedback,flag,rate,heading,initial_heading,heading_error,angular_velocity_z,linear_velocity_x
@@ -90,7 +118,7 @@ def callback(msg):
 
 def main():
     global cmd,data,flag,servcaller,servcaller2,node_found,check,mid_avg,params,params2,heading,feedback
-    
+    #global vertices
     while not rospy.is_shutdown():
         if check!=[]:
             count=0
@@ -113,6 +141,31 @@ def main():
                 rospy.loginfo(decision)
                 rospy.loginfo(str(count)+"    "+str(node_found)+"     "+str(heading))
                 initial=feedback.pose.pose.position.x
+"""
+                exists=0
+                v_x=vertex_x_from_ekf
+                v_y=vertex_y_from_ekf
+                for v in vertices:
+                    if v.x>v_x+delta and v.x<v_x-delta and v.y>v_y+delta and v.y<v_y-delta:
+                        exists=1
+                        break
+                
+                if exists!=1:
+                    #create new vertex
+                    tag = generate_random_tag()
+                    
+                    vertex v = vertex(v_x,v_y,tag,,len(vertices)+1)
+                    
+
+
+
+"""
+
+
+
+               
+
+
                 if decision=="L" :
                     #call turn_service_caller with param 0
                     rospy.loginfo("Turning Left")
@@ -176,7 +229,8 @@ if  __name__ == "__main__":
     cmd=Twist()
     mid_avg=0
     range_thresh=1
-    
+    #vertices=[]
+
     ##Service1 for deciding direction
     rospy.wait_for_service('/direction_service_server')
     servcaller=rospy.ServiceProxy('/direction_service_server',direction)        
@@ -189,5 +243,6 @@ if  __name__ == "__main__":
     pub=rospy.Publisher('/bot_0/cmd_vel',Twist,queue_size=1)
     
     sub=rospy.Subscriber('/bot_0/laser/scan',LaserScan,callback)
+    #sub_vertex=rospy,Subscriber('/vertex_info,vertex_msg,callback_vertex)
     main()
     rospy.spin()

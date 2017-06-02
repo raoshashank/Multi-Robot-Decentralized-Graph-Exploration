@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import numpy
+import rospy
 class vertex:
    vertex_tag=str()
    x = 0

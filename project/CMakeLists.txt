@@ -10,6 +10,7 @@ project(project)
 find_package(catkin REQUIRED COMPONENTS
   message_generation
   std_msgs
+  std_srvs
   rospy
   
 )
@@ -48,7 +49,9 @@ find_package(catkin REQUIRED COMPONENTS
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
 ## Generate messages in the 'msg' folder
-
+add_message_files(FILES
+  vertex_info.msg
+)
 
 ## Generate services in the 'srv' folder
 add_service_files(FILES
@@ -197,3 +200,4 @@ include_directories(
 
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
+
