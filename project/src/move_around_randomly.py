@@ -9,6 +9,7 @@ from nav_msgs.msg import Odometry
 from project.srv import direction,directionRequest,directionResponse,dirturn,dirturnRequest,dirturnResponse 
 from project import vertex
 from project.msg import vertex_info
+#from project.src import matrix_operations
 
 def escape_turn(initial):
     global data,check,feedback
@@ -141,20 +142,42 @@ def main():
                 rospy.loginfo(decision)
                 rospy.loginfo(str(count)+"    "+str(node_found)+"     "+str(heading))
                 initial=feedback.pose.pose.position.x
-"""
+"""             
+                
+
                 exists=0
                 v_x=vertex_x_from_ekf
                 v_y=vertex_y_from_ekf
-                for v in vertices:
-                    if v.x>v_x+delta and v.x<v_x-delta and v.y>v_y+delta and v.y<v_y-delta:
+                
+                ##Check vertex has beacon or not
+                for i in vertices:
+                    if i.x>v_x+delta and i.x<v_x-delta and i.y>v_y+delta and i.y<v_y-delta:
                         exists=1
+                        v=i
                         break
                 
+
+                    
+
                 if exists!=1:
                     #create new vertex
                     tag = generate_random_tag()
-                    
-                    vertex v = vertex(v_x,v_y,tag,,len(vertices)+1)
+                    In=initialize() #Initialize incidence matrix
+                    v = vertex(v_x,v_y,tag,In,len(vertices)+1)
+                
+                ###First Step on vertex visit
+                I_dash=matrix_operations.completed(In)
+                I_2_dash=matrix_operations.merge_matrix(I_dash,I)
+                I_temp=matrix_operations.merge_matrix(I_2_dash,v.In)
+                I_temp=matrix_operations.order_matrix(I_temp)
+                I=I_temp
+                v.I=I_temp
+                
+
+
+
+
+            
                     
 
 
@@ -230,6 +253,7 @@ if  __name__ == "__main__":
     mid_avg=0
     range_thresh=1
     #vertices=[]
+    #I=[]
 
     ##Service1 for deciding direction
     rospy.wait_for_service('/direction_service_server')
