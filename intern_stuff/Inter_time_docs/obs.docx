@@ -1,0 +1,21 @@
+﻿1. Graph is unknown apriori
+2. All robots start from root vertex vr
+3. @ first visit robot drops beacon at the vertex
+4. when robot visits vertex,partially completed graph of robot and vertex are merged using Algorithm 1
+5. Partially completed graph is stored as ordered pairs as Gc(Rk)=(Vc(Rk),Ec(Rk)) ,similarly for Gc(Vj)
+6. modified incidence matrix stores info according to incidence angles instead of traditional binary data
+7. column of incidence matrix->Edge info and Row->Vertex info
+8. Completed Edge->2 non-zero elements in column,Unexplored edge->1 positive element and out edge->1 negative element
+9. Information is exchanged ONLY when Robot visits vertex having a beacon
+10. Each edge traversal is an “update”
+11. nth updates for partially completed graph a bot Rk and vj is given by Eq.2
+12. Unexplored,out edges are first merged,then next edge traversal is chosen
+13. Next Edge Traversal is chosen by the prefrence order:	[my_unexpl,unexpl,out]
+14. my_unexplored+other_bots_unexplored=unexplored
+15. Exploration Completion condition is as : Eu(Rk)U Eo(Rk)=null set
+16. When Robot visits vertex,Gc(vj)=Gc(Rk)
+17. robots can select any edge for traversal not just the one connected to the vertex they are on
+18. Column Vectors in Incidence matrix are maintained in an ordered fashion as: completed,out,unexplored from left to right
+19. @ begining of the exploration,the incidence matrix is initialized as in Eq.14
+20. Each row of incidence matrix is assigned a unique vertex tag
+21. 
