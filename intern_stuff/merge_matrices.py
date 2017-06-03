@@ -11,37 +11,44 @@ import scipy as sp
 #def vertex_tag(matrix,rno):
     
 def out(matrix):
-    out_edges=[]
-    for i in range(matrix.shape(0)):
-        for j in range(matrix.shape(1)):
-            if matrix[i][j]<0:
-                out_edges.append(j)
-    return out_edges
+    out_edge=[]
+    count=0    
+    for i in range(matrix.shape[1]):
+        count=0
+        for j in range(matrix.shape[0]):
+            if matrix[j][i]<0:
+                count+=1
+        if count==1:
+            out_edge.append(i)
+    
+    return out_edge
     
 def completed(matrix):
     completed_edges=[]
     count=0    
-    for i in range(matrix.shape(0)):
-        for j in range(matrix.shape(1)):
-            if matrix[i][j]>0:
-                count+=1;
-        if count==2:
-            completed_edges.append(j)
+    for i in range(matrix.shape[1]):
         count=0
+        for j in range(matrix.shape[0]):
+            if matrix[j][i]>0:
+                count+=1
+        if count==2:
+            completed_edges.append(i)
+    
     return completed_edges
     
     
 def unexplored(matrix):
-    unexplored_edges=[]
+    unexplored_edge=[]
     count=0    
-    for i in range(matrix.shape(0)):
-        for j in range(matrix.shape(1)):
-            if matrix[i][j]<0:
+    for i in range(matrix.shape[1]):
+        count=0
+        for j in range(matrix.shape[0]):
+            if matrix[j][i]>0:
                 count+=1
         if count==1:
-            unexplored_edges.append(j)
-        count=0
-    return unexplored_edges
+            unexplored_edge.append(i)
+    
+    return unexplored_edge
     
     
 def get_vertex_tag(matrix,rno):
@@ -58,7 +65,7 @@ def delete_column(matrix,cno):
 def non_zero_element_count(matrix):
     count=0
     for i in matrix:
-        if(i!=0):
+        if i!=0:
             count+=1;
             
     return count
@@ -67,10 +74,30 @@ E1cap=0
 E2cap=0
 Vcap=0
 
+
+def make(I1,I2):
+    V1=I1.shape[0]
+    E1=I1.shape[1]
+    V2=I2.shape[0]
+    E2=I2.shape[1]
+    for i in range(V1+V2):
+      for j in range(E1+E2):
+          if i<V1 and j<E1:
+              I[i][j]=I1[i][j]
+              
+          if i>V1 and j>E1:
+              I[i][j]=I2[i-V1][j-E1]
+              
+          else: 
+            I[i][j]=0
+    
+    return I
+              
+          
+
     
 ##Algorithm 1
-def Merge_atrices(I1,I2):
-    I=np.array([[I1,0],[0,I2]])
+def merge_matrices(I1,I2):   
     V1=I1.shape[0]
     E1=I1.shape[1]
     V2=I2.shape[0]
@@ -80,8 +107,12 @@ def Merge_atrices(I1,I2):
     Vcap=V1+V2
     delj=[]
     deli=[]
-    for (i1,j1) in (range(1,V1),range(1,E1)):
-        for (i2,j2) in (range(V1+1,V1+V2),range(E1+1,E1+E2)):
+    ###I=[[I1,0],[0,I2]]
+    I=make(I1,I2)
+    for i1 in range(1,V1):
+     for j1 in range(1,E1):
+        for i2 in range(V1+1,V1+V2):
+          for j2 in range(E1+1,E1+E2): 
             if get_vertex_tag(I,i1)==get_vertex_tag(I,i2) and np.absolute(I[i1,j1])==np.absolute(I[i2,j2]) :
               if np.sign(I[i1,j1])!=np.sign(I[i2,j2]) :
                   I[i2,j2]=-np.absolute(I[i1,j1])
@@ -111,7 +142,7 @@ def Merge_atrices(I1,I2):
     return I              
         
 ##Algorithm2
-
+"""
 def Order_Matrix(I_Merged):
     I1=I_Merged[:,1:E1cap]
     I2=I_Merged[:,(E1cap+1):(E1cap+E2cap)]
@@ -122,5 +153,11 @@ def Order_Matrix(I_Merged):
     I1_unexplored=unexplored(I1)
     I2_unexplored=unexplored(I2)
     I_ordered=
-        
-    
+"""
+
+if __name__ == '__main__':
+    I1=np.array([[1,1,0,0,0],
+                 [0,1,1,0,0],
+                 [0,0,1,-1,-1]])
+    I2=np.array([1,1,1],[])
+    print make(I1,I2)
