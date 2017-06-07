@@ -22,7 +22,7 @@
 
 
   <node name="bot_0" pkg="gazebo_ros" type="spawn_model" output="screen"
-   args="-urdf -param robot_description -model mybot0  -namespace bot_0" />
+   args="-urdf -param robot_description -model mybot0 -x -5 -y -5 -z 0  -namespace bot_0" />
 
 
 

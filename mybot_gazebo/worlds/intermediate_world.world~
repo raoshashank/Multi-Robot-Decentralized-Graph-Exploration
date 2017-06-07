@@ -61,6 +61,8 @@
         <gravity>1</gravity>
       </link>
     </model>
+
+    
 <model name='test_map'>
     <link name='Wall_105'>
       <collision name='Wall_105_Collision'>
@@ -876,6 +878,10 @@
     </link>
     <static>1</static>
   </model> 	
+
+
+
+
     <physics type='ode'>
       <max_step_size>0.001</max_step_size>
       <real_time_factor>1</real_time_factor>

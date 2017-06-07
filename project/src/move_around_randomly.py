@@ -10,7 +10,7 @@ from project.srv import direction,directionRequest,directionResponse,dirturn,dir
 from project import vertex
 from project.msg import vertex_info
 #from project.src import matrix_operations
-
+"""
 def escape_turn(initial):
     global data,check,feedback
     ##find first local minimas in + & - directions from 0
@@ -35,7 +35,7 @@ def escape_turn(initial):
     else:
     
     
-
+"""
 """    
 def callback_vertex(msg):
     global vertices
@@ -43,7 +43,7 @@ def callback_vertex(msg):
 """        
 """
 Problems:
-1.Please Let me use Constant Lane Width!!
+1.Please Let me use Constant Lane Width!!Correction,I am using constant line width .Assume the bot starts at the middle of a laneself
 2.Incidence to Adjacency
 3.Path to next vertex
 
@@ -60,7 +60,7 @@ Steps:
 4.run Order_matrix algorithm
 5.Select last edge of In() as next edge for traversal
 6.Use "adjacency matrix" to get next path to traverse to next edge
-7.Traverse to The next Edge
+7.Traverse to The next Edgemy
 
 """ 
 
@@ -101,7 +101,7 @@ def callback(msg):
     
     ###check in 3 directions for the free space
     ###slice the ranges array into 3 regions for 3 directions:;left,forward and right
-
+    
     left_slice=np.asarray(data[667:720])
     left_avg=left_slice.sum()/len(left_slice)
     
