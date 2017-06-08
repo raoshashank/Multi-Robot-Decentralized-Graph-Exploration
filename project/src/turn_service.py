@@ -23,7 +23,6 @@ def turn():
     
     
     heading_error=heading_cmd-heading
-    rospy.loginfo(heading_error)
 
     if heading_error>pi:
         heading_error=heading_error-2*pi
@@ -37,7 +36,6 @@ def turn():
     else:
         cmd.angular.z=-0.8*heading_error
         pub.publish(cmd)
-        rospy.loginfo(heading_error)
 
 def callback(msg):
     global feedback

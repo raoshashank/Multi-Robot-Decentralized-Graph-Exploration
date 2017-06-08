@@ -12,17 +12,7 @@ def callback(request):
     #rospy.loginfo("Entered Service Callback")
     check=request.check
     resp=directionResponse()
-"""
-    
 
-
-
-
-
-
-
-
-"""    
     ###Choosing which direction to go...Currently threshold of 3 metres
     while True:
             i=randint(0,2)
@@ -32,7 +22,7 @@ def callback(request):
     #rospy.loginfo("Value of i is : "+str(i))
     
     if i==0:
-       rospy.loginfo("Turning Left")
+       #rospy.loginfo("Turning Left")
        resp.response="L"
 
     elif i==1:
@@ -46,7 +36,7 @@ def callback(request):
 
 
 
-range_threshold=1
+range_threshold=3
 while not rospy.is_shutdown():
     rospy.Service('/direction_service_server',direction,callback)
     rospy.spin()

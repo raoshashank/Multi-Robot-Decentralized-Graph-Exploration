@@ -2,13 +2,14 @@
 import rospy
 from sensor_msgs.msg import LaserScan
 from geometry_msgs.msg import Twist
-from math import pi,atan2,cos
+from math import pi,atan2,cos,sqrt,pow
 from random import randint
 import numpy as np
 from nav_msgs.msg import Odometry
 from project.srv import direction,directionRequest,directionResponse,dirturn,dirturnRequest,dirturnResponse 
-from project import vertex
-from project.msg import vertex_info
+
+#from project import vertex
+#from project.msg import vertex_info
 #from project.src import matrix_operations
 """
 def escape_turn(initial):
@@ -43,7 +44,7 @@ def callback_vertex(msg):
 """        
 """
 Problems:
-1.Please Let me use Constant Lane Width!!Correction,I am using constant line width .Assume the bot starts at the middle of a laneself
+1.Please Let me use Constant Lane Width!!Correction,I am using constant line width .Assume the bot starts at the middle of a lane
 2.Incidence to Adjacency
 3.Path to next vertex
 
@@ -63,6 +64,31 @@ Steps:
 7.Traverse to The next Edgemy
 
 """ 
+
+
+#Constant lane width escape is just move forward by lane_width/2 from centre.
+def forward_by_half_lane_width():
+    
+    global data,check,feedback,lane_width,pub
+
+    x_start=feedback.pose.pose.position.x
+    y_start=feedback.pose.pose.position.y
+    delta=0.05
+    error=0
+    goal_dst=lane_width/2+delta
+    dst=0
+    while dst<=goal_dst:
+       go_forward()
+       dst=sqrt((feedback.pose.pose.position.x-x_start)**2+(feedback.pose.pose.position.y-y_start)**2)
+       #rospy.loginfo(str(feedback.pose.pose.position.x)+" "+str(final_pos)+" "+str(initial_pos))
+
+    cmd=Twist()
+    pub.publish(cmd)
+    rospy.loginfo("Escaped")
+
+    
+
+
 
 def go_forward():
     global q,cmd,feedback,flag,rate,heading,initial_heading,heading_error,angular_velocity_z,linear_velocity_x
@@ -102,16 +128,18 @@ def callback(msg):
     ###check in 3 directions for the free space
     ###slice the ranges array into 3 regions for 3 directions:;left,forward and right
     
-    left_slice=np.asarray(data[667:720])
-    left_avg=left_slice.sum()/len(left_slice)
+    #left_slice=np.asarray(data[667:720])
+    #left_avg=left_slice.sum()/len(left_slice)
     
-    mid_slice=np.asarray(data[355:365])
-    mid_avg=mid_slice.sum()/len(mid_slice)
     
-    right_slice=np.asarray(data[0:53])
-    right_avg=right_slice.sum()/len(right_slice)
+    #mid_slice=np.asarray(data[355:365])
+    #mid_avg=mid_slice.sum()/len(mid_slice)
     
-    check=[left_avg,mid_avg,right_avg]
+    #right_slice=np.asarray(data[0:53])
+    #right_avg=right_slice.sum()/len(right_slice)
+    
+    #check=[left_avg,mid_avg,right_avg]
+    check=[data[719],data[360],data[0]]
     #rospy.loginfo("Values i found are:"+str(check))    
     
 
@@ -123,29 +151,62 @@ def main():
     while not rospy.is_shutdown():
         if check!=[]:
             count=0
-            ###Check for node position###
-            
+
             for i in check:
                 if i>range_thresh:
                     count+=1
-            rospy.loginfo(str(count)+"    "+str(node_found)+"     "+str(heading))
-           
-        
 
-            if count>=2 and node_found==0:
-                node_found=1
+            ###Check for node position###
+            if count>=2 :#and node_found==0:
+               # node_found=1
                 rospy.loginfo("I'M AT NODE!")        
-                cmd=Twist()
-                pub.publish(cmd)
+                #cmd=Twist()
+                #pub.publish(cmd)
+                forward_by_half_lane_width()
                 params.check=check
                 decision=servcaller(params).response
                 rospy.loginfo(decision)
-                rospy.loginfo(str(count)+"    "+str(node_found)+"     "+str(heading))
-                initial=feedback.pose.pose.position.x
-"""             
-                
+                #rospy.loginfo(str(count)+"    "+str(node_found)+"     "+str(heading))
+                #initial=feedback.pose.pose.position.x
+#Below commented code goes here.
 
-                exists=0
+                if decision=="L" :
+                    #call turn_service_caller with param 0
+                    rospy.loginfo("Turning Left")
+                    params2.angle=pi/2
+                    servcaller2(params2)
+                    flag=0
+                    forward_by_half_lane_width()
+                    #escape_turn(initial)
+                elif decision=="R" :
+                    #call turn_service_caller with param 1
+                    rospy.loginfo("Turning Right")
+                    params2.angle=-pi/2
+                    servcaller2(params2)
+                    flag=0
+                    forward_by_half_lane_width()
+                    #escape_turn(initial)
+                
+                else:
+                    rospy.loginfo("Going Forward")
+                    forward_by_half_lane_width()
+                    #escape_turn(initial)
+              
+            
+                    
+                
+            if count==0 and data[360]<lane_width/2:#mid_avg<range_thresh:
+                rospy.loginfo("I'm at end node!")
+                ###Call turn_service_caller with param 2
+                params2.angle=pi
+                servcaller2(params2)
+                flag=0
+                #node_found=1
+            
+            else:
+                go_forward()
+                
+"""             exists=0
                 v_x=vertex_x_from_ekf
                 v_y=vertex_y_from_ekf
                 
@@ -172,60 +233,7 @@ def main():
                 I_temp=matrix_operations.order_matrix(I_temp)
                 I=I_temp
                 v.I=I_temp
-                
-
-
-
-
-            
-                    
-
-
-
 """
-
-
-
-               
-
-
-                if decision=="L" :
-                    #call turn_service_caller with param 0
-                    rospy.loginfo("Turning Left")
-                    params2.angle=pi/2
-                    servcaller2(params2)
-                    flag=0
-                    escape_turn(initial)
-                         
-                
-                elif decision=="R" :
-                    #call turn_service_caller with param 1
-                    rospy.loginfo("Turning Right")
-                    params2.angle=-pi/2
-                    servcaller2(params2)
-                    flag=0
-                    escape_turn(initial)
-                
-                else:
-                    rospy.loginfo("Going Forward")
-                    escape_turn(initial)
-              
-            
-                    
-                
-            if count==0 and mid_avg<range_thresh:
-                rospy.loginfo("I'm at end node!")
-                ###Call turn_service_caller with param 2
-                params2.angle=pi
-                servcaller2(params2)
-                flag=0
-                node_found=1
-            
-            else:
-                go_forward()
-                #rospy.loginfo("Going Forward")
-        
-
 
 
 
@@ -251,7 +259,8 @@ if  __name__ == "__main__":
     feedback=Odometry()
     cmd=Twist()
     mid_avg=0
-    range_thresh=1
+    range_thresh=2
+    lane_width=2
     #vertices=[]
     #I=[]
 
