@@ -5,7 +5,7 @@ Created on Wed May 17 19:09:48 2017
 @author: shashank
 """
 import numpy as np
-import scipy as sp
+
 #import random package
 #how will angles be generated?
 #def vertex_tag(matrix,rno):
