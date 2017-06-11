@@ -7,10 +7,9 @@ from random import randint
 import numpy as np
 from nav_msgs.msg import Odometry
 from project.srv import direction,directionRequest,directionResponse,dirturn,dirturnRequest,dirturnResponse 
-
+from matrix_op import matrix_op
 #from project import vertex
-#from project.msg import vertex_info
-#from project.src import matrix_operations
+from project.msg import vertex_info,vertices
 """
 def escape_turn(initial):
     global data,check,feedback
@@ -36,16 +35,9 @@ def escape_turn(initial):
     else:
     
     
-"""
-"""    
-def callback_vertex(msg):
-    global vertices
-    vertices=msg
-"""        
+"""      
 """
 Problems:
-1.Please Let me use Constant Lane Width!!Correction,I am using constant line width .Assume the bot starts at the middle of a lane
-2.Incidence to Adjacency
 3.Path to next vertex
 
 
@@ -66,21 +58,19 @@ Steps:
 """ 
 
 
-#Constant lane width escape is just move forward by lane_width/2 from centre.
-def forward_by_half_lane_width():
-    
-    global data,check,feedback,lane_width,pub
 
-    x_start=feedback.pose.pose.position.x
-    y_start=feedback.pose.pose.position.y
+def forward_by_half_lane_width():
+    global data,check,odom_feedback,lane_width,pub
+
+    x_start=odom_feedback.pose.pose.position.x
+    y_start=odom_feedback.pose.pose.position.y
     delta=0.05
     error=0
     goal_dst=lane_width/2+delta
     dst=0
     while dst<=goal_dst:
        go_forward()
-       dst=sqrt((feedback.pose.pose.position.x-x_start)**2+(feedback.pose.pose.position.y-y_start)**2)
-       #rospy.loginfo(str(feedback.pose.pose.position.x)+" "+str(final_pos)+" "+str(initial_pos))
+       dst=sqrt((odom_feedback.pose.pose.position.x-x_start)**2+(odom_feedback.pose.pose.position.y-y_start)**2)
 
     cmd=Twist()
     pub.publish(cmd)
@@ -91,11 +81,11 @@ def forward_by_half_lane_width():
 
 
 def go_forward():
-    global q,cmd,feedback,flag,rate,heading,initial_heading,heading_error,angular_velocity_z,linear_velocity_x
-    q[0]=feedback.pose.pose.orientation.w
-    q[1]=feedback.pose.pose.orientation.x
-    q[2]=feedback.pose.pose.orientation.y
-    q[3]=feedback.pose.pose.orientation.z  
+    global q,cmd,odom_feedback,flag,rate,heading,initial_heading,heading_error,angular_velocity_z,linear_velocity_x
+    q[0]=odom_feedback.pose.pose.orientation.w
+    q[1]=odom_feedback.pose.pose.orientation.x
+    q[2]=odom_feedback.pose.pose.orientation.y
+    q[3]=odom_feedback.pose.pose.orientation.z  
     heading=atan2(2*(q[0]*q[3]+q[1]*q[2]),1-2*(q[2]*q[2]+q[3]*q[3]))
     if flag==0:
         initial_heading=heading
@@ -109,19 +99,21 @@ def go_forward():
     cmd=Twist()
     cmd.linear.x=linear_velocity_x
     cmd.angular.z=angular_velocity_z
-    #rate.sleep()
     pub.publish(cmd)
-    #rospy.loginfo("Going Forward")
 
 
 
-def callback2(msg):
-    global feedback
-    feedback=msg
+def odom_callback(msg):
+    global odom_feedback
+    odom_feedback=msg
+
+def vertices_callback(msg):
+    global vertex_array
+    vertex_array=msg.v
 
 
 
-def callback(msg):
+def laser_callback(msg):
     global check,mid_avg,data
     data=msg.ranges
     
@@ -143,10 +135,28 @@ def callback(msg):
     #rospy.loginfo("Values i found are:"+str(check))    
     
 
+def check_for_vertex_in_array(v_x,v_y):
+    global vertex_array
+    v_found=vertex_info()
+    v_found.tag=""
+    tolerance=0.1
+    for v in vertex_array:
+        if v.x+tolerance < v_x < v.x-tolerance and v.y+tolerance < v_y < v.y-tolerance:
+            rospy.loginfo("Arrived at node_tag:"+str(v.tag))
+            v_found=v
+    
+    return v_found
 
+##TO DO
+def initialize_vertex_I():
+    return []
+
+#TO DO
+def get_vertex_tag():
+    return ""
 
 def main():
-    global cmd,data,flag,servcaller,servcaller2,node_found,check,mid_avg,params,params2,heading,feedback
+    global cmd,data,flag,servcaller,servcaller2,node_found,check,mid_avg,params,params2,heading,odom_feedback,vertex_array
     #global vertices
     while not rospy.is_shutdown():
         if check!=[]:
@@ -157,18 +167,42 @@ def main():
                     count+=1
 
             ###Check for node position###
-            if count>=2 :#and node_found==0:
-               # node_found=1
+            #TO DO : include end node here
+
+            if count>=2 :
                 rospy.loginfo("I'M AT NODE!")        
-                #cmd=Twist()
-                #pub.publish(cmd)
                 forward_by_half_lane_width()
-                params.check=check
-                decision=servcaller(params).response
-                rospy.loginfo(decision)
-                #rospy.loginfo(str(count)+"    "+str(node_found)+"     "+str(heading))
-                #initial=feedback.pose.pose.position.x
-#Below commented code goes here.
+                #params.check=check
+                #decision=servcaller(params).response
+                #rospy.loginfo(decision)
+                #Below commented code goes here.
+                v_found=vertex_info()
+                v_x=odom_feedback.pose.pose.position.x
+                v_y=odom_feedback.pose.pose.position.y
+                v_found=check_for_vertex_in_array(v_x,v_y)
+                if v_found.tag=="":
+                    rospy.loginfo("Found new node!!")
+                    str=get_vertex_tag()
+                    v_found.tag=str
+                    v_found.x=v_x
+                    v_found.y=v_y
+                    v_found.I=initialize_vertex_I()
+                    rospy.loginfo("Vertex with tag "+v_found.tag+"Found")
+                
+                    
+                 #TO DO  
+                I_dash=[] ##Completed Column ??
+
+                ##First Step
+                I_updated=op.first_step_on_vertex_visit(v_found.I,I_R,completed_column)
+                I_R=I_updated
+                v_found=I_updated
+                vertex_array.append(v_found)
+                pub_vertices.publish(vertex_array)
+                
+
+                
+                
 
                 if decision=="L" :
                     #call turn_service_caller with param 0
@@ -177,7 +211,6 @@ def main():
                     servcaller2(params2)
                     flag=0
                     forward_by_half_lane_width()
-                    #escape_turn(initial)
                 elif decision=="R" :
                     #call turn_service_caller with param 1
                     rospy.loginfo("Turning Right")
@@ -185,12 +218,10 @@ def main():
                     servcaller2(params2)
                     flag=0
                     forward_by_half_lane_width()
-                    #escape_turn(initial)
                 
                 else:
                     rospy.loginfo("Going Forward")
                     forward_by_half_lane_width()
-                    #escape_turn(initial)
               
             
                     
@@ -201,12 +232,13 @@ def main():
                 params2.angle=pi
                 servcaller2(params2)
                 flag=0
-                #node_found=1
             
             else:
                 go_forward()
                 
-"""             exists=0
+"""           
+
+                  exists=0
                 v_x=vertex_x_from_ekf
                 v_y=vertex_y_from_ekf
                 
@@ -240,6 +272,8 @@ def main():
         
 if  __name__ == "__main__":
     rospy.init_node('random_mover',anonymous=False)   
+    ###########Global Variables############
+    bot_no=0
     
     q=[0,0,0,0]
     flag=0
@@ -251,31 +285,40 @@ if  __name__ == "__main__":
     interval_for_angle_measurement=10
     linear_velocity_x=0.1
     angular_velocity_z=0
+    
     params=directionRequest()
     params2=dirturnRequest()
+    
     rate=rospy.Rate(5)
+    
     odom=Odometry()
     data=LaserScan()
-    feedback=Odometry()
+    odom_feedback=Odometry()
     cmd=Twist()
+    op=matrix_op()
+    
     mid_avg=0
     range_thresh=2
     lane_width=2
-    #vertices=[]
-    #I=[]
+    vertex_array=[]
+    I_R=[]
+    ###########Global Variables############
 
     ##Service1 for deciding direction
     rospy.wait_for_service('/direction_service_server')
-    servcaller=rospy.ServiceProxy('/direction_service_server',direction)        
+    servcaller=rospy.ServiceProxy('/direction_service_server',new_direction)        
     
     #Service2 for turning in the decided direction
     rospy.wait_for_service('/turn_service_server')
     servcaller2=rospy.ServiceProxy('/turn_service_server',dirturn)
     
-    sub_odom=rospy.Subscriber('/bot_0/odom',Odometry,callback2)
+    sub_odom=rospy.Subscriber('/bot_0/odom',Odometry,odom_callback)
     pub=rospy.Publisher('/bot_0/cmd_vel',Twist,queue_size=1)
     
-    sub=rospy.Subscriber('/bot_0/laser/scan',LaserScan,callback)
-    #sub_vertex=rospy,Subscriber('/vertex_info,vertex_msg,callback_vertex)
+    sub=rospy.Subscriber('/bot_0/laser/scan',LaserScan,laser_callback)
+    
+    sub_vertex=rospy,Subscriber('/vertices',vertices,vertices_callback)
+    pub_vertices=rospy.Publisher('/vertices',vertices,queue_size=1)
+
     main()
     rospy.spin()
