@@ -15,14 +15,17 @@ from project.msg import vertex_info
 def callback(msg):
   #rospy.loginfo("X:"+str(msg.pose.spose.position.x)+"    Y:"+str(msg.pose.pose.position.y)+"    Z:"+str(msg.pose.pose.position.z))
   odom_feedback=msg
+  rospy.loginfo("X: "+str(msg.pose.pose.position.x)+" Y: "+str(msg.pose.pose.position.y))
+
+"""  
   q=[0,0,0,0]
   q[0]=odom_feedback.pose.pose.orientation.w
   q[1]=odom_feedback.pose.pose.orientation.x
   q[2]=odom_feedback.pose.pose.orientation.y
   q[3]=odom_feedback.pose.pose.orientation.z  
   heading=atan2(2*(q[0]*q[3]+q[1]*q[2]),1-2*(q[2]*q[2]+q[3]*q[3]))
-  rospy.loginfo(heading)
-
+"""
+  
   
 
 rospy.init_node('topic_subscriber')
