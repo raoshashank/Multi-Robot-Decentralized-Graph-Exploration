@@ -6,7 +6,7 @@ from math import pi,atan2,cos,sqrt,pow
 from random import randint
 import numpy as np
 from nav_msgs.msg import Odometry
-from project.srv import direction,directionRequest,directionResponse,dirturn,dirturnRequest,dirturnResponse 
+from project.srv import direction,directionRequest,directionResponse,dirturn,dirturnRequest,dirturnResponse,new_direction,new_directionRequest,new_directionResponse 
 from matrix_op import matrix_op
 #from project import vertex
 from project.msg import vertex_info,vertices
@@ -200,7 +200,11 @@ def main():
                 vertex_array.append(v_found)
                 pub_vertices.publish(vertex_array)
                 
+                ##Call direction_service.py for second step on vertex visit
 
+                params.I=I_updated
+                ##output will be array of directions    
+                path=servcaller(params).response
                 
                 
 

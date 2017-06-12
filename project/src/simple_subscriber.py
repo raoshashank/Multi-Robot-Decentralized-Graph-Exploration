@@ -7,21 +7,29 @@ import matplotlib.pyplot as plt
 from gazebo_msgs.msg import LinkStates
 from nav_msgs.msg import Odometry
 from sensor_msgs.msg import LaserScan
-from math import sin,cos
+from math import sin,cos,atan2
 from tf.transformations import euler_from_quaternion
 from geometry_msgs.msg import PoseWithCovarianceStamped
-from project.msg import test,vertex_info
+from project.msg import vertex_info
 
 def callback(msg):
   #rospy.loginfo("X:"+str(msg.pose.spose.position.x)+"    Y:"+str(msg.pose.pose.position.y)+"    Z:"+str(msg.pose.pose.position.z))
-  rospy.loginfo(msg.v[1])
+  odom_feedback=msg
+  q=[0,0,0,0]
+  q[0]=odom_feedback.pose.pose.orientation.w
+  q[1]=odom_feedback.pose.pose.orientation.x
+  q[2]=odom_feedback.pose.pose.orientation.y
+  q[3]=odom_feedback.pose.pose.orientation.z  
+  heading=atan2(2*(q[0]*q[3]+q[1]*q[2]),1-2*(q[2]*q[2]+q[3]*q[3]))
+  rospy.loginfo(heading)
+
+  
 
 rospy.init_node('topic_subscriber')
 bot_no=0
 topic_name="/bot_"+str(bot_no)
 rate=rospy.Rate(20)
-#sub=rospy.Subscriber('/robot_pose_ekf/odom_combined',PoseWithCovarianceStamped,callback)
-sub=rospy.Subscriber('/counter',test,callback)
+sub=rospy.Subscriber('/bot_0/odom',Odometry,callback)
 rospy.spin()
 
  
