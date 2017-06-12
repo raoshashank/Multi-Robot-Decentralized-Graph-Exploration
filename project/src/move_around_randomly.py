@@ -321,7 +321,7 @@ if  __name__ == "__main__":
     
     sub=rospy.Subscriber('/bot_0/laser/scan',LaserScan,laser_callback)
     
-    sub_vertex=rospy,Subscriber('/vertices',vertices,vertices_callback)
+    sub_vertex=rospy.Subscriber('/vertices',vertices,vertices_callback)
     pub_vertices=rospy.Publisher('/vertices',vertices,queue_size=1)
 
     main()
