@@ -8,21 +8,25 @@ import numpy as np
 from nav_msgs.msg import Odometry
 from project.srv import direction,directionRequest,directionResponse,dirturn,dirturnRequest,dirturnResponse 
 from matrix_op import matrix_op
-#from project import vertex
 from project.msg import vertex_info,vertices
+import networkx as nx
 
-
-
-### Traverse to next nodes 
-##test1 V1-V2-V4-V6-V7--> pass
-##test2 V1-V2-V3-V2-V4-V9-V11--?pass
-##test3 V6-V4-V9-V11-->pass
-
-def path_to_next_edge():
-    ##to apply djktstra algo here
-    global vertex_array
-    return["v4","v9","v11"]
-
+def path_to_next_edge(inci,current_v,next_v):
+    global vertex_array,op
+    adj=op.inci_to_adj(inci)
+    rospy.loginfo(next_v.tag)
+    i=current_v.pos_in_I
+    j=next_v.pos_in_I   
+    G=nx.from_numpy_matrix(adj,create_using=nx.DiGraph())    
+    path=nx.dijkstra_path(G,i,j)
+    rospy.loginfo(path)
+    ret_path=[]
+    for p in path:
+        temp=check_for_vertex_in_array_index(p)
+        ret_path.append(temp)
+    del ret_path[0]
+    rospy.loginfo(ret_path)
+    return ret_path
 def turn_to_next_vertex(current_v,next_v):
     global odom_feedback,cmd,pub
     err=0.2
@@ -52,10 +56,10 @@ def check_for_vertex_in_array(v_x,v_y):
     distance=0.5    
     for v in vertex_array:
         err=sqrt((v_x-v.x)**2+(v_y-v.y)**2)
-        #rospy.loginfo(err)
-        if  err<distance             :#v.x-tolerance < v_x < v.x+tolerance and v.y-tolerance < v_y < v.y+tolerance:
+        rospy.loginfo(err)
+        if  err<distance:#v.x-tolerance < v_x < v.x+tolerance and v.y-tolerance < v_y < v.y+tolerance:
             v_found=v
-    #rospy.loginfo("found :"+v_found.tag)
+    rospy.loginfo("found with coordinates :"+v_found.tag)
     return v_found
 
 def check_for_vertex_in_array_tag(tag):
@@ -65,8 +69,19 @@ def check_for_vertex_in_array_tag(tag):
     for v in vertex_array:
         if v.tag==tag:
             v_found=v
-    #rospy.loginfo("found :"+v_found.tag)
+    rospy.loginfo("found with tag:"+v_found.tag)
     return v_found
+
+def check_for_vertex_in_array_index(index):
+    global vertex_array
+    v_found=vertex_info()
+    v_found.tag=""
+    for v in vertex_array:
+        if v.pos_in_I==index:
+            v_found=v
+    rospy.loginfo("found with index:"+v_found.tag)
+    return v_found
+
 
 
 def forward_by_half_lane_width():
@@ -163,8 +178,19 @@ def orient_to_heading(dir):
 
 def main():
     global cmd,data,flag,servcaller,servcaller2,node_found,check,mid_avg,params,params2,heading,odom_feedback,vertex_array,done,lane_width,range_thresh
-    #global vertices
-    going_to_next_vertex=0
+    I=np.zeros((7,6))
+    I[0][0]=1
+    I[1][0]=1
+    I[1][1]=1
+    I[2][1]=1
+    I[2][2]=1
+    I[2][3]=1
+    I[3][2]=1
+    I[4][3]=1
+    I[4][4]=1
+    I[4][5]=1
+    I[5][4]=1
+    I[6][5]=1
     while not rospy.is_shutdown():
         if check!=[]:
             count=0
@@ -184,10 +210,9 @@ def main():
               v_y=odom_feedback.pose.pose.position.y
               v_found=check_for_vertex_in_array(v_x,v_y)
               rospy.loginfo("I am at : "+v_found.tag)
-              str=path_to_next_edge()
-              rospy.loginfo(str)              
-              for s in str:
-                  v_next=check_for_vertex_in_array_tag(s)
+              path=path_to_next_edge(I,v_found,vertex_array[7])
+              rospy.loginfo(path)              
+              for v_next in path:
                   next_turn=turn_to_next_vertex(v_found,v_next)
                   rospy.loginfo("Going to : " +v_next.tag)
                   rospy.loginfo(next_turn)
@@ -196,6 +221,7 @@ def main():
                       params2.angle=next_turn
                       servcaller2(params2)
                       
+
                   forward_by_half_lane_width()
 
                   while True:
@@ -221,7 +247,7 @@ def main():
 
         
 if  __name__ == "__main__":
-    rospy.init_node('random_mover',anonymous=False)   
+    rospy.init_node('follow_waypoint',anonymous=False)   
     ###########Global Variables############
     bot_no=0
     
