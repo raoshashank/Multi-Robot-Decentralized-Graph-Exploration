@@ -26,9 +26,11 @@ Steps:
 
 """ 
 def second_step_on_vertex_visit(I_R):
-    global E1cap,E2cap
+    global E1cap,E2cap,Vcap
     c_q=deque()
-    if op.non_zero_element_count(I_R[:,E1cap])
+    if op.non_zero_element_count(I_R[:,E1cap+E2cap])!=2:
+        elif expression:
+            pass
 
 
 def orient_to_heading(dir):
@@ -214,7 +216,7 @@ def main():
                 ##Node identify and initialize done
                 ##Do first step at vertex visit
                 #do second step at vertex visit
-                #Doubt:Is I' by any chance the last row of In-1(Rk)
+                #Doubt:Is I' by any chance the last row of In-1(Rk)?
                 E1cap=I.shape[1]
                 E2cap=v_found.inci.I.shape[1]
                 Vcap=I.shape[0]+v_found.inci.I.shape[0]
