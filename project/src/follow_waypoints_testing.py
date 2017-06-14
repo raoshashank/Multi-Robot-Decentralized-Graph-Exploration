@@ -93,7 +93,7 @@ def forward_by_half_lane_width():
     error=0
     goal_dst=lane_width/2+delta
     dst=0
-    while dst<=goal_dst:
+    while dst<=goal_dst and not rospy.is_shutdown():
        go_forward()
        dst=sqrt((odom_feedback.pose.pose.position.x-x_start)**2+(odom_feedback.pose.pose.position.y-y_start)**2)
 
@@ -149,7 +149,7 @@ def orient_to_heading(dir):
     q=[0,0,0,0]
     done=0
     heading_cmd=dir
-    while done!=1:
+    while done!=1 and not rospy.is_shutdown():
         cmd=Twist()
         q[0]=odom_feedback.pose.pose.orientation.w
         q[1]=odom_feedback.pose.pose.orientation.x
@@ -194,13 +194,12 @@ def main():
     while not rospy.is_shutdown():
         if check!=[]:
             count=0
-
             for i in check:
                 if i>range_thresh:
                     count+=1
-
+            rospy.loginfo(check)
             if count>=2 or (count==0 and data[360]<lane_width/2):
-              rospy.loginfo("I'M AT NODE!")
+              rospy.loginfo("I'M AT NODE!"+str(check))
               if count>=2:        
                 forward_by_half_lane_width()
 
@@ -224,7 +223,7 @@ def main():
 
                   forward_by_half_lane_width()
 
-                  while True:
+                  while True and not rospy.is_shutdown():
                       go_forward()
                       count_temp=0
                       for i in check:

@@ -139,7 +139,9 @@ class matrix_op:
 
         
         
-            
+   def __init__(self):
+       self.I=[][]
+       self.row_tag_dict={}         
 
 
    

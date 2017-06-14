@@ -3,29 +3,12 @@ import rospy
 from sensor_msgs.msg import LaserScan
 import numpy as np
 def callback(msg):
+
     data=msg.ranges
-    rospy.loginfo("Callback1")
-    left_slice=np.asarray(data[0:10])
-    left_avg=left_slice.sum()/len(left_slice)
-    mid_slice=np.asarray(data[355:365])
-    mid_avg=mid_slice.sum()/len(mid_slice)
-    right_slice=np.asarray(data[710:720])
-    right_avg=right_slice.sum()/len(right_slice)
-    rospy.loginfo(right_avg)
-    check=[left_avg,mid_avg,right_avg]
-    #rospy.loginfo("Values i found are:"+str(check))    
-    count=0
-    ###Check for node position###
-    for i in check:
-        if i>3:
-            count+=1
-""" 
-    if count>=2 :
-        rospy.loginfo("I'M AT NODE!") 
-    else:
-        rospy.loginfo("I'm not") 
-"""
- 
+    check=[data[719],data[360],data[0]]
+    rospy.loginfo(check)
+    if check[0]>2 or check[2]>2:
+      rospy.sleep(1000)
 
 rospy.init_node('test_node')
 rate=rospy.Rate(20)
