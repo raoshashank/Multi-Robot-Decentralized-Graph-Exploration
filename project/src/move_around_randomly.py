@@ -10,41 +10,11 @@ from project.srv import direction,directionRequest,directionResponse,dirturn,dir
 from matrix_op import matrix_op
 #from project import vertex
 from project.msg import vertex_info,vertices
+from collections import deque
+    
 """
-def escape_turn(initial):
-    global data,check,feedback
-    ##find first local minimas in + & - directions from 0
-    for i range(1,360):
-        if data[i]>data[i-1] and data[i]>data[i+1]:
-            right_minima=data[i]
-            ir=i
-    for i range(360,720):
-        if data[i]>data[i-1] and data[i]>data[i+1]:
-            left_minima=data[i]
-            il=i
-    
-    dist=left_minima*cos(il*0.00655)
-    
-    while feedback.pose.pose.position.x>(initial+dist):
-            go_forward()
-        
-    if data[0]>data[719]:
-        x=
-        
-        
-    else:
-    
-    
-"""      
-"""
-Problems:
-3.Path to next vertex
-
-
 Steps:
-1.Subscribe to vertex topic that stores info about all the identified vertices as an array of vertex class objects
 2.@node,check if coordinates correspond to vertex position of any vertex in the array
-    Checking coordinates is by using ekf filter to get coordinates from odometry data of robot
     2a.if yes then extract the vertex and go to 3
     2b.else find edges connected to vertex(basically angles of edges connected) 
        initialise a vertex with current coordinates and go to 3
@@ -52,13 +22,41 @@ Steps:
 3.run merge_matrix algorithm
 4.run Order_matrix algorithm
 5.Select last edge of In() as next edge for traversal
-6.Use "adjacency matrix" to get next path to traverse to next edge
-7.Traverse to The next Edgemy
+
 
 """ 
+def second_step_on_vertex_visit(I_R):
+    global E1cap,E2cap
+    c_q=deque()
+    if op.non_zero_element_count(I_R[:,E1cap])
 
 
+def orient_to_heading(dir):
+    global flag,odom_feedback,heading_cmd,heading,q,cmd ,done,angle,initial_heading,heading_error
+    q=[0,0,0,0]
+    done=0
+    heading_cmd=dir
+    while done!=1 and not rospy.is_shutdown():
+        cmd=Twist()
+        q[0]=odom_feedback.pose.pose.orientation.w
+        q[1]=odom_feedback.pose.pose.orientation.x
+        q[2]=odom_feedback.pose.pose.orientation.y
+        q[3]=odom_feedback.pose.pose.orientation.z  
+        heading=atan2(2*(q[0]*q[3]+q[1]*q[2]),1-2*(q[2]*q[2]+q[3]*q[3]))
+        heading_error=heading_cmd-heading
 
+        if heading_error>pi:
+            heading_error=heading_error-2*pi
+        if heading_error<=-pi:
+            heading_error=heading_error+2*pi
+    
+    
+        if abs(heading_error) < 0.001:
+            rospy.loginfo("Turn done!")
+            done=1
+        else:
+            cmd.angular.z=-0.8*heading_error
+            pub.publish(cmd)
 def forward_by_half_lane_width():
     global data,check,odom_feedback,lane_width,pub
 
@@ -140,23 +138,52 @@ def check_for_vertex_in_array(v_x,v_y):
     v_found=vertex_info()
     v_found.tag=""
     tolerance=0.1
+    distance=0.5    
     for v in vertex_array:
-        if v.x+tolerance < v_x < v.x-tolerance and v.y+tolerance < v_y < v.y-tolerance:
-            rospy.loginfo("Arrived at node_tag:"+str(v.tag))
+        err=sqrt((v_x-v.x)**2+(v_y-v.y)**2)
+        rospy.loginfo(err)
+        if  err<distance:
             v_found=v
-    
+    rospy.loginfo("found with coordinates :"+v_found.tag)
     return v_found
+
+def check_for_vertex_in_array_tag(tag):
+    global vertex_array
+    v_found=vertex_info()
+    v_found.tag=""
+    for v in vertex_array:
+        if v.tag==tag:
+            v_found=v
+    rospy.loginfo("found with tag:"+v_found.tag)
+    return v_found
+
+
+
 
 ##TO DO
 def initialize_vertex_I():
-    return []
+    global heading
+    I=[]
+    err=0.1
+    ##Angles to be checked 0(=2pi),pi/2,-pi(=pi),-pi/2(3pi/2) in order
+    ##Orient in pi/2 direction and check left and right
+    ##Assume order of checking doesnt matter
+    ##HOW THE F  DO I DO THIS SHIT!!
+        
+    I.append(heading)
+    orient_to_heading(pi/2)
+
+    
+
+    return [0,0,0,0]
 
 #TO DO
-def get_vertex_tag():
-    return ""
+def get_vertex_tag(tag_arr,i):
+    return return tag_arr[i]
 
 def main():
     global cmd,data,flag,servcaller,servcaller2,node_found,check,mid_avg,params,params2,heading,odom_feedback,vertex_array
+    global E1cap,E2cap,Vcap
     #global vertices
     while not rospy.is_shutdown():
         if check!=[]:
@@ -166,76 +193,37 @@ def main():
                 if i>range_thresh:
                     count+=1
 
-            ###Check for node position###
-            #TO DO : include end node here
-
-            if count>=2 :
+            if count>=2 or (count==0 and data[360]<lane_width/2):
+                if count>=2:
+                    forward_by_half_lane_width()
+                orient_to_heading(pi/2)
                 rospy.loginfo("I'M AT NODE!")        
-                forward_by_half_lane_width()
-                #params.check=check
-                #decision=servcaller(params).response
-                #rospy.loginfo(decision)
-                #Below commented code goes here.
                 v_found=vertex_info()
                 v_x=odom_feedback.pose.pose.position.x
                 v_y=odom_feedback.pose.pose.position.y
                 v_found=check_for_vertex_in_array(v_x,v_y)
                 if v_found.tag=="":
                     rospy.loginfo("Found new node!!")
-                    str=get_vertex_tag()
-                    v_found.tag=str
+                    v_found.tag='x'+str(v_x)+'y'+str(v_y)
                     v_found.x=v_x
                     v_found.y=v_y
-                    v_found.I=initialize_vertex_I()
+                    v_found.inci.I=initialize_vertex_I()
                     rospy.loginfo("Vertex with tag "+v_found.tag+"Found")
-                
-                    
-                 #TO DO  
-                I_dash=[] ##Completed Column ??
-
-                ##First Step
-                I_updated=op.first_step_on_vertex_visit(v_found.I,I_R,completed_column)
-                I_R=I_updated
-                v_found=I_updated
-                vertex_array.append(v_found)
-                pub_vertices.publish(vertex_array)
-                
-                ##Call direction_service.py for second step on vertex visit
-
-                params.I=I_updated
-                ##output will be array of directions    
-                path=servcaller(params).response
-                
-                
-
-                if decision=="L" :
-                    #call turn_service_caller with param 0
-                    rospy.loginfo("Turning Left")
-                    params2.angle=pi/2
-                    servcaller2(params2)
-                    flag=0
-                    forward_by_half_lane_width()
-                elif decision=="R" :
-                    #call turn_service_caller with param 1
-                    rospy.loginfo("Turning Right")
-                    params2.angle=-pi/2
-                    servcaller2(params2)
-                    flag=0
-                    forward_by_half_lane_width()
-                
                 else:
-                    rospy.loginfo("Going Forward")
-                    forward_by_half_lane_width()
-              
-            
-                    
+                    rospy.loginfo("I'm at node with tag:"+v_found.tag)
+                ##Node identify and initialize done
+                ##Do first step at vertex visit
+                #do second step at vertex visit
+                #Doubt:Is I' by any chance the last row of In-1(Rk)
+                E1cap=I.shape[1]
+                E2cap=v_found.inci.I.shape[1]
+                Vcap=I.shape[0]+v_found.inci.I.shape[0]
+                I=op.first_step_on_vertex_visit(I,v_found.inci.I,I[:,I.shape[1]-1])
+                v_found.inci.I=I
+                #Do second step on vertex visit
+                second_step_on_vertex_visit(I)    
                 
-            if count==0 and data[360]<lane_width/2:#mid_avg<range_thresh:
-                rospy.loginfo("I'm at end node!")
-                ###Call turn_service_caller with param 2
-                params2.angle=pi
-                servcaller2(params2)
-                flag=0
+            
             
             else:
                 go_forward()
@@ -305,7 +293,10 @@ if  __name__ == "__main__":
     range_thresh=2
     lane_width=2
     vertex_array=[]
-    I_R=[]
+    I=[]
+    E1cap=0
+    E2cap=0
+    Vcap=0
     ###########Global Variables############
 
     ##Service1 for deciding direction

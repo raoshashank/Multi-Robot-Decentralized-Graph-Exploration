@@ -57,7 +57,7 @@ def check_for_vertex_in_array(v_x,v_y):
     for v in vertex_array:
         err=sqrt((v_x-v.x)**2+(v_y-v.y)**2)
         rospy.loginfo(err)
-        if  err<distance:#v.x-tolerance < v_x < v.x+tolerance and v.y-tolerance < v_y < v.y+tolerance:
+        if  err<distance:
             v_found=v
     rospy.loginfo("found with coordinates :"+v_found.tag)
     return v_found

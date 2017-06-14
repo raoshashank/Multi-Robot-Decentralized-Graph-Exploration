@@ -3,7 +3,12 @@ import rospy
 import numpy as np
 
 class matrix_op:
-
+   def non_zero_element_count(I):
+       count=0
+       for i in I:
+           if i==0:
+               count+=1
+        return count
    def out(self,matrix):
     out_edge=np.zeros((matrix.shape[0],0))
     count=0    
@@ -63,7 +68,13 @@ class matrix_op:
      temp=[]
     return adj 
    
-   def merge_matrices(self,I1,I2):   
+   def get_vertex_tag(tags_I,i):
+    return tags_I[i]
+
+
+
+
+   def merge_matrices(self,I1,tags_I1,I2,tags_I2):   
     global E1cap,E2cap,Vcap
     V1=I1.shape[0]
     if len(I1.shape)!=1:
@@ -89,7 +100,7 @@ class matrix_op:
      for j1 in range(1,E1):
         for i2 in range(V1+1,V1+V2):
           for j2 in range(E1+1,E1+E2): 
-            if get_vertex_tag(I,i1)==get_vertex_tag(I,i2) and np.absolute(I[i1,j1])==np.absolute(I[i2,j2]) :
+            if get_vertex_tag(tags_I1,i1)==get_vertex_tag(tags_I2,i2) and np.absolute(I[i1,j1])==np.absolute(I[i2,j2]) :
               if np.sign(I[i1,j1])!=np.sign(I[i2,j2]) :
                   I[i2,j2]=-np.absolute(I[i1,j1])
                   I[i1,j1]=I[i2,j2]
@@ -140,7 +151,7 @@ class matrix_op:
         
         
    def __init__(self):
-       self.I=[][]
+       self.I=[]
        self.row_tag_dict={}         
 
 
