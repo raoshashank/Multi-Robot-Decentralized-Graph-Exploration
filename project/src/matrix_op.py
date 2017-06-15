@@ -3,6 +3,13 @@ import rospy
 import numpy as np
 
 class matrix_op:
+   def non_zero_element_sign(I):
+       for i in I:
+           if i!=0:
+               if i>0:
+                   return 0 
+                else return 1
+                
    def non_zero_element_count(I):
        count=0
        for i in I:
@@ -153,11 +160,6 @@ class matrix_op:
         ordered=self.Order_Matrix(I)
         return ordered
 
-        
-        
-   def __init__(self):
-       self.I=[]
-       self.row_tag_dict={}         
 
 
    

@@ -9,28 +9,39 @@ from nav_msgs.msg import Odometry
 from project.srv import direction,directionRequest,directionResponse,dirturn,dirturnRequest,dirturnResponse,new_direction,new_directionRequest,new_directionResponse 
 from matrix_op import matrix_op
 #from project import vertex
-from project.msg import vertex_info,vertices
+from project.msg import vertex_info,vertices,incidence
 from collections import deque
-    
-"""
-Steps:
-2.@node,check if coordinates correspond to vertex position of any vertex in the array
-    2a.if yes then extract the vertex and go to 3
-    2b.else find edges connected to vertex(basically angles of edges connected) 
-       initialise a vertex with current coordinates and go to 3
+import networkx as nx   
 
-3.run merge_matrix algorithm
-4.run Order_matrix algorithm
-5.Select last edge of In() as next edge for traversal
+def second_step_on_vertex_visit(current_v):
+     global c_q,E1cap,E2cap,Vcap,tags_array_R,I_R 
+     if op.non_zero_element_count(I_R[:,E1cap+E2cap])==2:
+        break
+     elif len(c_q)==0 or (op.non_zero_element_count(c_q[len(c_q)-1])==2):
+         #select last edge as next
+         #find shortest path to known vertex of edge
+         next_edge=I_R[:,E1cap+E2cap-1]
+         ##identify index of known edge on next vertex for passing to dijkstra
+         for i in next_edge:
+             if i!=0:
+                 next_v_tag=tags_array_R[i]
+                 break
+        
+         ##index of current edge for dijsktra
+         for j in I_R:
+             if tags_array_R[j]==current_v.inci.tag:
+                 break
 
 
-""" 
-def second_step_on_vertex_visit(I_R):
-    global E1cap,E2cap,Vcap
-    c_q=deque()
-    if op.non_zero_element_count(I_R[:,E1cap+E2cap])!=2:
-        elif expression:
-            pass
+
+         next_v=check_for_vertex_in_array_tag(next_v_tag)
+         adj=op.inci_to_adj(I_R)
+         G=nx.from_numpy_matrix(adj,create_using=nx.DiGraph())
+         path=nx.dijkstra(G,i,j)
+         
+         
+         
+         
 
 
 def orient_to_heading(dir):
@@ -162,13 +173,12 @@ def check_for_vertex_in_array_tag(tag):
 
 
 
-##TO DO
+
 def initialize_vertex_I():
     global heading,range_thresh
     I=[]
     err=0.1
     ##Angles to be checked 0(=2pi),pi/2,-pi(=pi),-pi/2(3pi/2) in order
-   
     orient_to_heading(pi/2)
     if data[0]>range_thresh:
         I.append(2*pi)
@@ -184,13 +194,9 @@ def initialize_vertex_I():
     
     return I
 
-#TO DO
-def get_vertex_tag(tag_arr,i):
-    return return tag_arr[i]
-
 def main():
     global cmd,data,flag,servcaller,servcaller2,node_found,check,mid_avg,params,params2,heading,odom_feedback,vertex_array
-    global E1cap,E2cap,Vcap
+    global E1cap,E2cap,Vcap,I_R
     #global vertices
     while not rospy.is_shutdown():
         if check!=[]:
@@ -222,46 +228,17 @@ def main():
                 ##Do first step at vertex visit
                 #do second step at vertex visit
                 #Doubt:Is I' by any chance the last row of In-1(Rk)?
-                [I,Vcap,E1cap,E2cap]=op.first_step_on_vertex_visit(I,v_found.inci.I,I[:,I.shape[1]-1])
-                v_found.inci.I=I
+                [I_R,Vcap,E1cap,E2cap]=op.first_step_on_vertex_visit(I,v_found.inci.I,I[:,I.shape[1]-1])
+                v_found.inci.I=I_R
+                ##UPDATE tags_array for Rk
                 #Do second step on vertex visit
-                second_step_on_vertex_visit(I)    
+                second_step_on_vertex_visit(v_found)    
                 
             
             
             else:
                 go_forward()
                 
-"""           
-
-                  exists=0
-                v_x=vertex_x_from_ekf
-                v_y=vertex_y_from_ekf
-                
-                ##Check vertex has beacon or not
-                for i in vertices:
-                    if i.x>v_x+delta and i.x<v_x-delta and i.y>v_y+delta and i.y<v_y-delta:
-                        exists=1
-                        v=i
-                        break
-                
-
-                    
-
-                if exists!=1:
-                    #create new vertex
-                    tag = generate_random_tag()
-                    In=initialize() #Initialize incidence matrix
-                    v = vertex(v_x,v_y,tag,In,len(vertices)+1)
-                
-                ###First Step on vertex visit
-                I_dash=matrix_operations.completed(In)
-                I_2_dash=matrix_operations.merge_matrix(I_dash,I)
-                I_temp=matrix_operations.merge_matrix(I_2_dash,v.In)
-                I_temp=matrix_operations.order_matrix(I_temp)
-                I=I_temp
-                v.I=I_temp
-"""
 
 
 
@@ -292,12 +269,15 @@ if  __name__ == "__main__":
     odom_feedback=Odometry()
     cmd=Twist()
     op=matrix_op()
-    
+    c_q=deque()
+
     mid_avg=0
     range_thresh=2
     lane_width=2
     vertex_array=[]
-    I=[]
+    Inci_R=incidence()
+    I_R=Inci_R.I
+    tags_array_R=Inci_R.tags_array
     E1cap=0
     E2cap=0
     Vcap=0

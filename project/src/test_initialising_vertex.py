@@ -103,7 +103,6 @@ def initialize_vertex_I():
     global heading,range_thresh
     I=[]
     err=0.1
-    ##Angles to be checked 0(=2pi),pi/2,-pi(=pi),-pi/2(3pi/2) in order
     orient_to_heading(pi/2)
     if data[0]>range_thresh:
         I.append(2*pi)
