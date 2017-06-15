@@ -8,7 +8,9 @@ class matrix_op:
        for i in I:
            if i==0:
                count+=1
-        return count
+       return count
+
+
    def out(self,matrix):
     out_edge=np.zeros((matrix.shape[0],0))
     count=0    
@@ -93,40 +95,43 @@ class matrix_op:
     delj=[]
     deli=[]
     
+    tags_I1.append(tags_I2)
+    tags=tags_I1
+
     ###I=[[I1,0],[0,I2]]
     I=np.row_stack((np.column_stack((I1,np.zeros((V1,E2)))),np.column_stack((np.zeros((V2,E1)),I2))))
     
-    for i1 in range(1,V1):
-     for j1 in range(1,E1):
-        for i2 in range(V1+1,V1+V2):
-          for j2 in range(E1+1,E1+E2): 
-            if get_vertex_tag(tags_I1,i1)==get_vertex_tag(tags_I2,i2) and np.absolute(I[i1,j1])==np.absolute(I[i2,j2]) :
+    for i1 in range(0,V1):
+     for j1 in range(0,E1):
+        for i2 in range(V1,V1+V2):
+          for j2 in range(E1,E1+E2): 
+            if tags[i1]==tags[i2] and np.absolute(I[i1,j1])==np.absolute(I[i2,j2]) :
               if np.sign(I[i1,j1])!=np.sign(I[i2,j2]) :
                   I[i2,j2]=-np.absolute(I[i1,j1])
                   I[i1,j1]=I[i2,j2]
-              if non_zero_element_count(I[(V1+1):(V1+V2),j2])==2 :
+              if non_zero_element_count(I[V1:(V1+V2),j2])==2 :
                   delj.append(j1)
                   E1cap-=1
               else:
-                  if non_zero_element_count(I[1:V1,j1])==2:
+                  if non_zero_element_count(I[0:V1,j1])==2:
                       delj.append(j2)
                       E2cap-=1
                   else:
                       delj.append(j1)
                       E1cap-=1
                       
-              if non_zero_element_count(I[(V1+1):(V1+V2),j1]<2) :
-                  I[(V1+1):(V1+V2),j1]=I[(V1+1):(V1+V2),j1]+I[(V1+1):(V1+V2),j2]
+              if non_zero_element_count (I[V1:(V1+V2),j1]<2) :
+                  I[V1:(V1+V2),j1]=I[V1:(V1+V2),j1]+I[V1:(V1+V2),j2]
               
-              if non_zero_element_count(I[1:V1,j2]<2) :
-                  I[1:V1,j2]=I[1:V1,j2]+I[1:V1,j1]
+              if non_zero_element_count(I[0:V1,j2]<2):
+                  I[0:V1,j2]=I[0:V1,j2]+I[0:V1,j1]
               
               deli.append(i1)
     for i in deli:
         delete_row(I,i)
     for j in delj:
         delete_column(I,j)   
-    return I  
+    return [I,Vcap,E1cap,E2cap]  
 
    def Order_Matrix(self,I_Merged):
         global E1cap,E2cap,Vcap
