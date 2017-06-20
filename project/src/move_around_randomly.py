@@ -8,7 +8,6 @@ import numpy as np
 from nav_msgs.msg import Odometry
 from project.srv import direction,directionRequest,directionResponse,dirturn,dirturnRequest,dirturnResponse,new_direction,new_directionRequest,new_directionResponse 
 from matrix_op import matrix_op
-#from project import vertex
 from project.msg import vertex_info,vertices,incidence
 from collections import deque
 import networkx as nx   
@@ -38,11 +37,16 @@ def second_step_on_vertex_visit(current_v):
          adj=op.inci_to_adj(I_R)
          G=nx.from_numpy_matrix(adj,create_using=nx.DiGraph())
          path=nx.dijkstra(G,i,j)
-         
-         
-         
-         
 
+         #TO DO
+         ##What the hell is Ec??
+         Ec=0
+         b=I_R[:,Ec:E1cap+E2cap-1]
+         b=np.roll(b,-1*(b.shape[1]-1))
+         I_R=I_R[:,0:Ec]
+         I_R=np.column_stack((I_R,b))
+         
+         
 
 def orient_to_heading(dir):
     global flag,odom_feedback,heading_cmd,heading,q,cmd ,done,angle,initial_heading,heading_error
@@ -70,6 +74,8 @@ def orient_to_heading(dir):
         else:
             cmd.angular.z=-0.8*heading_error
             pub.publish(cmd)
+
+
 def forward_by_half_lane_width():
     global data,check,odom_feedback,lane_width,pub
 
@@ -88,9 +94,6 @@ def forward_by_half_lane_width():
     rospy.loginfo("Escaped")
 
     
-
-
-
 def go_forward():
     global q,cmd,odom_feedback,flag,rate,heading,initial_heading,heading_error,angular_velocity_z,linear_velocity_x
     q[0]=odom_feedback.pose.pose.orientation.w
@@ -171,37 +174,33 @@ def check_for_vertex_in_array_tag(tag):
     return v_found
 
 
-
-
-
 def initialize_vertex_I():
     global heading,range_thresh
     I=[]
     err=0.1
     ##Angles to be checked 0(=2pi),pi/2,-pi(=pi),-pi/2(3pi/2) in order
-    orient_to_heading(pi/2)
     if data[0]>range_thresh:
         I.append(2*pi)
     if data[360]>range_thresh:
         I.append(pi/2)
     if data[719]>range_thresh:
         I.append(pi)
-    orient_to_heading(0):
+    orient_to_heading(0)
     if data[0]>range_thresh:
         I.append(3*pi/2)
     orient_to_heading(pi/2)
     rospy.loginfo(I)
-    
     return I
+
 
 def main():
     global cmd,data,flag,servcaller,servcaller2,node_found,check,mid_avg,params,params2,heading,odom_feedback,vertex_array
-    global E1cap,E2cap,Vcap,I_R
-    #global vertices
+    global E1cap,E2cap,Vcap,I_R,tags_array_R
+
     while not rospy.is_shutdown():
         if check!=[]:
             count=0
-
+           
             for i in check:
                 if i>range_thresh:
                     count+=1
@@ -215,26 +214,39 @@ def main():
                 v_x=odom_feedback.pose.pose.position.x
                 v_y=odom_feedback.pose.pose.position.y
                 v_found=check_for_vertex_in_array(v_x,v_y)
+                ##New Vertex discovery
                 if v_found.tag=="":
                     rospy.loginfo("Found new node!!")
                     v_found.tag='x'+str(v_x)+'y'+str(v_y)
                     v_found.x=v_x
                     v_found.y=v_y
                     v_found.inci.I=initialize_vertex_I()
+                    v_found.inci.tags_array.append(v_found.tag)
                     rospy.loginfo("Vertex with tag "+v_found.tag+"Found")
                 else:
                     rospy.loginfo("I'm at node with tag:"+v_found.tag)
-                ##Node identify and initialize done
-                ##Do first step at vertex visit
-                #do second step at vertex visit
-                #Doubt:Is I' by any chance the last row of In-1(Rk)?
-                [I_R,Vcap,E1cap,E2cap]=op.first_step_on_vertex_visit(I,v_found.inci.I,I[:,I.shape[1]-1])
+                
+                #Doubt:Is I' by any chance the first row of In-1(Rk)?
+                #I update by 1st step
+                I_double_dash=[]
+                [I_double_dash,Vcap,E1cap,E2cap]=op.merge_matrices(I_R[:,0],tags_array_R,I_R,tags_array_R)
+                [I_R,Vcap,E1cap,E2cap]=op.first_step_on_vertex_visit(I_R,tags_array_R,v_found.inci.I,v_found.inci.tags_array)
                 v_found.inci.I=I_R
+                v_found.inci.tags_array=tags_array_R
                 ##UPDATE tags_array for Rk
                 #Do second step on vertex visit
-                second_step_on_vertex_visit(v_found)    
-                
-            
+                second_step_on_vertex_visit(v_found)   
+                v_found.inci.I=I_R   
+                v_found.inci.tags_array=tags_array_R
+
+
+                #publish updated vertex info to /vertices topic
+
+                for count,v in enumerate(vertex_array):
+                    if v_found.tag==v.tag:
+                        vertex_array[count]=v_found
+
+                pub_vertices.publish(vertex_array)             
             
             else:
                 go_forward()

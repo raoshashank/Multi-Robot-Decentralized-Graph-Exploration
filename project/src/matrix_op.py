@@ -8,7 +8,8 @@ class matrix_op:
            if i!=0:
                if i>0:
                    return 0 
-                else return 1
+               else:
+                    return 1
                 
    def non_zero_element_count(I):
        count=0
@@ -77,12 +78,6 @@ class matrix_op:
      temp=[]
     return adj 
    
-   def get_vertex_tag(tags_I,i):
-    return tags_I[i]
-
-
-
-
    def merge_matrices(self,I1,tags_I1,I2,tags_I2):   
     global E1cap,E2cap,Vcap
     V1=I1.shape[0]
@@ -101,22 +96,21 @@ class matrix_op:
     Vcap=V1+V2
     delj=[]
     deli=[]
-    
-    tags_I1.append(tags_I2)
-    tags=tags_I1
 
+    tags=np.append(tags_I1,tags_I2)
+    print "Tags"+str(tags)
     ###I=[[I1,0],[0,I2]]
     I=np.row_stack((np.column_stack((I1,np.zeros((V1,E2)))),np.column_stack((np.zeros((V2,E1)),I2))))
-    
+    print "I:"+str(I)
     for i1 in range(0,V1):
      for j1 in range(0,E1):
-        for i2 in range(V1,V1+V2):
-          for j2 in range(E1,E1+E2): 
+        for i2 in range(V1,V1+V2-1):
+          for j2 in range(E1,E1+E2-1): 
             if tags[i1]==tags[i2] and np.absolute(I[i1,j1])==np.absolute(I[i2,j2]) :
               if np.sign(I[i1,j1])!=np.sign(I[i2,j2]) :
                   I[i2,j2]=-np.absolute(I[i1,j1])
                   I[i1,j1]=I[i2,j2]
-              if non_zero_element_count(I[V1:(V1+V2),j2])==2 :
+              if non_zero_element_count(I[V1:(V1+V2-1),j2])==2 :
                   delj.append(j1)
                   E1cap-=1
               else:
@@ -127,23 +121,26 @@ class matrix_op:
                       delj.append(j1)
                       E1cap-=1
                       
-              if non_zero_element_count (I[V1:(V1+V2),j1]<2) :
-                  I[V1:(V1+V2),j1]=I[V1:(V1+V2),j1]+I[V1:(V1+V2),j2]
+              if non_zero_element_count (I[V1:(V1+V2-1),j1])<2 :
+                  I[V1:(V1+V2-1),j1]=I[V1:(V1+V2-1),j1]+I[V1:(V1+V2-1),j2]
               
-              if non_zero_element_count(I[0:V1,j2]<2):
+              if non_zero_element_count(I[0:V1,j2])<2:
                   I[0:V1,j2]=I[0:V1,j2]+I[0:V1,j1]
               
               deli.append(i1)
-    for i in deli:
-        delete_row(I,i)
-    for j in delj:
-        delete_column(I,j)   
-    return [I,Vcap,E1cap,E2cap]  
+    
+    I=np.delete(I,(deli),axis=0)
+    I=np.delete(I,(delj),axis=1)
+    tags=np.delete(tags,(deli),axis=0)
+    
+    print "I: "+str(I)
+    print "tags:"+str(tags)
+    #return [I,Vcap,E1cap,E2cap,tags]  
 
    def Order_Matrix(self,I_Merged):
         global E1cap,E2cap,Vcap
-        I1=I_Merged[:,1:E1cap]
-        I2=I_Merged[:,(E1cap+1):(E1cap+E2cap)]
+        I1=I_Merged[:,0:E1cap]
+        I2=I_Merged[:,E1cap:E1cap+E2cap-1]
         I1_completed=self.completed(I1)
         I2_completed=self.completed(I2)
         I1_out=self.out(I1)
@@ -151,14 +148,15 @@ class matrix_op:
         I1_unexplored=self.unexplored(I1)
         I2_unexplored=self.unexplored(I2)
         I_ordered=np.column_stack((I1_completed,I2_completed,I1_out,I2_out,I1_unexplored,I2_unexplored)) 
-        return I_ordered   
+        Ec=I1_completed.shape[1]+I2_completed.shape[1]
+        return [Ec,I_ordered]   
 
    def first_step_on_vertex_visit(self,I_V,I_R,I_dash):
        ##TO DO 
         I_double_dash=self.merge_matrices(I_dash,I_R)
         I=self.merge_matrices(I_double_dash,I_V)
-        ordered=self.Order_Matrix(I)
-        return ordered
+        [Ec,ordered]=self.Order_Matrix(I)
+        return [Ec,ordered]
 
 
 

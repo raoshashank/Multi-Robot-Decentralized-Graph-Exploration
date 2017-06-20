@@ -1,21 +1,12 @@
 #!/usr/bin/env python
 import rospy
-from math import pi,atan2
 import numpy as np
-from math import pi,asin,sin
 from matrix_op import matrix_op
-from nav_msgs.msg import Odometry
+from math import pi
 
-def callback(msg):
-    q=[0,0,0,0]
-    q[0]=msg.pose.pose.orientation.w
-    q[1]=msg.pose.pose.orientation.x
-    q[2]=msg.pose.pose.orientation.y
-    q[3]=msg.pose.pose.orientation.z  
-    heading=atan2(2*(q[0]*q[3]+q[1]*q[2]),1-2*(q[2]*q[2]+q[3]*q[3]))
-    rospy.loginfo(heading)
-
-rospy.init_node("test")
-
-sub=rospy.Subscriber('/bot_0/odom',Odometry,callback)
-rospy.spin()
+op=matrix_op()
+I1=np.array([[-pi,-pi/2]])
+tags_I1=['v1']
+I2=np.array([[2*pi,pi/2,pi]])
+tags_I2=['v2']
+op.merge_matrices(I1,tags_I1,I2,tags_I2)
