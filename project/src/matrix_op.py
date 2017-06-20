@@ -4,12 +4,14 @@ import numpy as np
 
 class matrix_op:
    def non_zero_element_sign(I):
+       r=1
        for i in I:
            if i!=0:
                if i>0:
-                   return 0 
+                   break 
                else:
-                    return 1
+                    r=-1
+       return r 
                 
    def non_zero_element_count(I):
        count=0
@@ -78,7 +80,7 @@ class matrix_op:
      temp=[]
     return adj 
    
-   def merge_matrices(self,I1,tags_I1,I2,tags_I2):   
+   def merge_matrices(self,I1,I2):#tags_I1,tags_I2):   
     global E1cap,E2cap,Vcap
     V1=I1.shape[0]
     if len(I1.shape)!=1:
@@ -97,8 +99,8 @@ class matrix_op:
     delj=[]
     deli=[]
 
-    tags=np.append(tags_I1,tags_I2)
-    print "Tags"+str(tags)
+    #tags=np.append(tags_I1,tags_I2)
+    #print "Tags"+str(tags)
     ###I=[[I1,0],[0,I2]]
     I=np.row_stack((np.column_stack((I1,np.zeros((V1,E2)))),np.column_stack((np.zeros((V2,E1)),I2))))
     print "I:"+str(I)
@@ -131,13 +133,10 @@ class matrix_op:
     
     I=np.delete(I,(deli),axis=0)
     I=np.delete(I,(delj),axis=1)
-    tags=np.delete(tags,(deli),axis=0)
-    
-    print "I: "+str(I)
-    print "tags:"+str(tags)
-    #return [I,Vcap,E1cap,E2cap,tags]  
+  #  tags=np.delete(tags,(deli),axis=0)
+    return [I,Vcap,E1cap,E2cap,tags]  
 
-   def Order_Matrix(self,I_Merged):
+   def Order_Matrix(self,I_Merged,E1cap,E2cap,Vcap):
         global E1cap,E2cap,Vcap
         I1=I_Merged[:,0:E1cap]
         I2=I_Merged[:,E1cap:E1cap+E2cap-1]
@@ -151,12 +150,6 @@ class matrix_op:
         Ec=I1_completed.shape[1]+I2_completed.shape[1]
         return [Ec,I_ordered]   
 
-   def first_step_on_vertex_visit(self,I_V,I_R,I_dash):
-       ##TO DO 
-        I_double_dash=self.merge_matrices(I_dash,I_R)
-        I=self.merge_matrices(I_double_dash,I_V)
-        [Ec,ordered]=self.Order_Matrix(I)
-        return [Ec,ordered]
 
 
 
