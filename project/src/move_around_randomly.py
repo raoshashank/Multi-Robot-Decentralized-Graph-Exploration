@@ -12,11 +12,9 @@ from project.msg import vertex_info,vertices,incidence
 from collections import deque
 import networkx as nx   
 """
-1.Generate I' matrix
-2.even when Dijsktra is running , on visiting edges,the nodes have to identified , merging etc to be done but new edge not to be changed unless its gets traversed
-3.vertex_tags management
-4.Second step Algo Q management
-
+1.even when Dijsktra is running , on visiting edges,the nodes have to identified , merging etc to be done but new edge not to be changed unless its gets traversed
+2.vertex_tags management
+3.Second step Algo Q management
 """
 """
 main() will only identify current vertices,intialise  vertices and execute First_Step
@@ -41,9 +39,9 @@ def turn_to_next_vertex(current_v,next_v):
 
 
 
-def second_step_on_vertex_visit(current_v):
+def second_step_on_vertex_visit():
      global traverse_q,E1cap,E2cap,Vcap,tags_array_R,I_R,Ec
-     global current_v,previous_vertex,next_vertex
+     global current_v,previous_vertex,next_vertex,previous_value,current_value
     
      if op.non_zero_element_count(I_R[:,E1cap+E2cap-1])==2:
         break
@@ -81,21 +79,20 @@ def second_step_on_vertex_visit(current_v):
                  traverse_q.append(r)
             
             ##Queue updated
-
-
-
-
-         next_vertex=traverse_q[0]
-         if op.non_zero_element_sign(I_R[:,E1cap+E2cap-1])>1:
+         if op.non_zero_element(I_R[:,E1cap+E2cap-1])>0:
             I_R[:,E1cap+E2cap-1]=-I_R[:,E1cap+E2cap-1]
 
-
+        
          #circular shifting   
          b=I_R[:,Ec:E1cap+E2cap-1]
          b=np.roll(b,-1*(b.shape[1]-1))
          I_R=I_R[:,0:Ec]
          I_R=np.column_stack((I_R,b))
-         
+
+         previous_vertex=current_v
+         next_vertex=traverse_q[0]
+         turn_to_next_vertex(current_v,next_vertex)
+
         
 def orient_to_heading(dir):
     global flag,odom_feedback,heading_cmd,heading,q,cmd ,done,angle,initial_heading,heading_error
@@ -245,14 +242,14 @@ def initialize_vertex_I():
 def main():
     global cmd,data,flag,servcaller,servcaller2,node_found,check,mid_avg,params,params2,heading,odom_feedback,vertex_array
     global E1cap,E2cap,Vcap,I_R,tags_array_R,Ec
-    global current_v,previous_vertex
-
+    global current_v,previous_vertex,previous_value,current_value
+    
     while not rospy.is_shutdown():
         if check!=[]:
             count=0
            
             for i in check:
-                if i>range_thresh:
+                if i>rasnge_thresh:
                     count+=1
 
             if count>=2 or (count==0 and data[360]<lane_width/2):
@@ -280,19 +277,41 @@ def main():
                 ##First Step
                 I_double_dash=[]
                 I_dash=np.zeros((2,1))
-                I_dash=[]
+                I_dash=[]                
+                err=0.1
+                if abs(heading-0)<err:
+                    I_dash.append(2*pi)
+                    I_dash.append(pi)
+                
+                elif abs(heading-pi/2)<err:
+                    I_dash.append(pi/2)
+                    I_dash.append(3*pi/2)
+                
+                elif abs(heading-pi)<err:
+                    I_dash.append(pi)
+                    I_dash.append(2*pi)
+                
+                elif abs(heading+pi/2)<err:
+                    I_dash.append(3*pi/2)
+                    I_dash.append(pi/2)
+
+    
+                tags_I_dash=[previous_vertex.inci.I,current_v.inci.I]        
                 Ec=0
-                [I_double_dash,Vcap,E1cap,E2cap]=op.merge_matrices(I_dash,I_R)
-                [I_R,Vcap,E1cap,E2cap]=op.merge_matrices(I_double_dash,v_found.inci.I)
+                [I_double_dash,Vcap,E1cap,E2cap,tags_array_R]=op.merge_matrices(I_dash,tags_I_dash,I_R,tags_array_R)
+                [I_R,Vcap,E1cap,E2cap,tags_array_R]=op.merge_matrices(I_double_dash,tags_array_R,current_v.inci.I,current_v.inci.tags_)
                 [Ec,I_R]=op.Order_Matrix(I_R,E1cap,E2cap,Vcap)            
                 v_found.inci.I=I_R
+                v_found.inci.tags_array=tags_array_R
                 #v_found.inci.tags_array=tags_array_R
                 ##UPDATE tags_array for Rk
                 #Do second step on vertex visit
-                second_step_on_vertex_visit(v_found)   
+
+                current_v=v_found
+                second_step_on_vertex_visit()   
+
                 v_found.inci.I=I_R   
                 v_found.inci.tags_array=tags_array_R
-                
                 #publish updated vertex info to /vertices topic
                 for count,v in enumerate(vertex_array):
                     if v_found.tag==v.tag:
@@ -320,6 +339,7 @@ if  __name__ == "__main__":
     check=[]
     interval_for_angle_measurement=10
     linear_velocity_x=0.1
+    
     angular_velocity_z=0
     
     params=directionRequest()
@@ -329,6 +349,8 @@ if  __name__ == "__main__":
     
 
     previous_vertex=vertex_info()
+    previous_value=0
+    current_value=0
     next_vertex=vertex_info()
     current_v=vertex_info()
 

@@ -3,15 +3,9 @@ import rospy
 import numpy as np
 
 class matrix_op:
-   def non_zero_element_sign(I):
-       r=1
-       for i in I:
-           if i!=0:
-               if i>0:
-                   break 
-               else:
-                    r=-1
-       return r 
+   def non_zero_element(I):
+       i=[x for x in I if x!=0]
+       return i 
                 
    def non_zero_element_count(I):
        count=0
@@ -133,7 +127,7 @@ class matrix_op:
     
     I=np.delete(I,(deli),axis=0)
     I=np.delete(I,(delj),axis=1)
-  #  tags=np.delete(tags,(deli),axis=0)
+    #tags=np.delete(tags,(deli),axis=0)
     return [I,Vcap,E1cap,E2cap,tags]  
 
    def Order_Matrix(self,I_Merged,E1cap,E2cap,Vcap):
