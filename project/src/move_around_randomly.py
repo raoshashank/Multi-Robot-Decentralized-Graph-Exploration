@@ -11,20 +11,22 @@ from matrix_op import matrix_op
 from project.msg import vertex_info,vertices,incidence
 from collections import deque
 import networkx as nx   
-"""
-1.even when Dijsktra is running , on visiting edges,the nodes have to identified , merging etc to be done but new edge not to be changed unless its gets traversed
-2.vertex_tags management
-3.Second step Algo Q management
-"""
-"""
-main() will only identify current vertices,intialise  vertices and execute First_Step
-and Second Step.
-When bo vertex is found,main() drives robot in forward direction
-Second Step algo will initialise Queue containing the vertices for trajectory
-Second step should direct robot so it should give direction to turn etc.
 
-"""
-#Give direction to turn for reaching next_turn
+def get vertex_tag(I,A):
+    vertex_tag_I=[];
+    a=A.shape[0]
+    for j in range(I.shape[0]):
+        for i in range(a):
+            B_1 = I[j,:];
+            C_1 = A[i,:];
+            B_2 = B_1[B_1!=0];
+            B = np.abs(B_2);
+            C = C_1[C_1!=0]
+            if np.array_equal(np.sort(np.intersect1d(B,C)),np.sort(B))==True:
+                vertex_tag_I.append(i);
+                
+    return vertex_tag_I
+
 def turn_to_next_vertex(current_v,next_v):
     global odom_feedback,cmd,pub
     err=0.2
@@ -40,13 +42,26 @@ def turn_to_next_vertex(current_v,next_v):
 
 
 def second_step_on_vertex_visit():
-     global traverse_q,E1cap,E2cap,Vcap,tags_array_R,I_R,Ec
-     global current_v,previous_vertex,next_vertex,previous_value,current_value
-    
+     global traverse_q,E1cap,E2cap,Vcap,I_R,Ec
+     global current_v,previous_vertex,next_vertex
+    flag=0
      if op.non_zero_element_count(I_R[:,E1cap+E2cap-1])==2:
         break
+        rospy.loginfo("Exploration Complete!!")
+        
      else:
-         if len(traverse_q)==0 or op.non_zero_element_count(traverse_q[len(traverse_q)-1])==2:
+        ##TO check if last vertex in Q is associated with only completed edges for second condition
+        for i in I:
+        
+            if vertex_tag of i and vertex_tag of traverse_q[len(traverse_q)-1] are equal:
+                if any edge in I with traverse_q[len(traverse_q)-1] has only 1 value:
+                    flag=1
+            
+
+
+
+         if len(traverse_q)==0 or flag==0:
+            traverse_q=deque()    
             next_edge=I_R[:,E1cap+E2cap-1]
         
             ##identify index of known edge on next vertex for passing to dijkstra
@@ -198,26 +213,18 @@ def laser_callback(msg):
 def check_for_vertex_in_array(v_x,v_y):
     global vertex_array
     v_found=vertex_info()
-    v_found.tag=""
     tolerance=0.1
-    distance=0.5    
+    distance=0.5  
+    flag=0  
     for v in vertex_array:
         err=sqrt((v_x-v.x)**2+(v_y-v.y)**2)
         rospy.loginfo(err)
         if  err<distance:
             v_found=v
+            flag=1
     rospy.loginfo("found with coordinates :"+v_found.tag)
-    return v_found
+    return [v_found,flag]
 
-def check_for_vertex_in_array_tag(tag):
-    global vertex_array
-    v_found=vertex_info()
-    v_found.tag=""
-    for v in vertex_array:
-        if v.tag==tag:
-            v_found=v
-    rospy.loginfo("found with tag:"+v_found.tag)
-    return v_found
 
 
 def initialize_vertex_I():  
@@ -241,18 +248,18 @@ def initialize_vertex_I():
 
 def main():
     global cmd,data,flag,servcaller,servcaller2,node_found,check,mid_avg,params,params2,heading,odom_feedback,vertex_array
-    global E1cap,E2cap,Vcap,I_R,tags_array_R,Ec
-    global current_v,previous_vertex,previous_value,current_value
+    global E1cap,E2cap,Vcap,I_R,Ec
+    global current_v,previous_vertex
     
     while not rospy.is_shutdown():
         if check!=[]:
             count=0
            
             for i in check:
-                if i>rasnge_thresh:
+                if i>range_thresh:
                     count+=1
 
-            if count>=2 or (count==0 and data[360]<lane_width/2):
+            if count>=2 or (count==0 and data[360]<lane_width/2):               ##NODE condition including end node
                 if count>=2:
                     forward_by_half_lane_width()
                 orient_to_heading(pi/2)
@@ -260,25 +267,23 @@ def main():
                 v_found=vertex_info()
                 v_x=odom_feedback.pose.pose.position.x
                 v_y=odom_feedback.pose.pose.position.y
-                v_found=check_for_vertex_in_array(v_x,v_y)
+                [v_found,found]=check_for_vertex_in_array(v_x,v_y)
                 ##New Vertex discovery
-                if v_found.tag=="":
+                if found==1:
                     rospy.loginfo("Found new node!!")
-                    v_found.tag='x'+str(v_x)+'y'+str(v_y)
                     v_found.x=v_x
                     v_found.y=v_y
                     v_found.inci.I=initialize_vertex_I()
-                    v_found.inci.tags_array.append(v_found.tag)
-                    rospy.loginfo("Vertex with tag "+v_found.tag+"Found")
                 else:
-                    rospy.loginfo("I'm at node with tag:"+v_found.tag)
-                
+                    rospy.loginfo("I'm at node :"+str(v_found.x)+" "+str(v_found.y))
                 current_v=v_found
                 ##First Step
                 I_double_dash=[]
                 I_dash=np.zeros((2,1))
                 I_dash=[]                
                 err=0.1
+                
+                #Finding I'
                 if abs(heading-0)<err:
                     I_dash.append(2*pi)
                     I_dash.append(pi)
@@ -296,26 +301,26 @@ def main():
                     I_dash.append(pi/2)
 
     
-                tags_I_dash=[previous_vertex.inci.I,current_v.inci.I]        
                 Ec=0
-                [I_double_dash,Vcap,E1cap,E2cap,tags_array_R]=op.merge_matrices(I_dash,tags_I_dash,I_R,tags_array_R)
-                [I_R,Vcap,E1cap,E2cap,tags_array_R]=op.merge_matrices(I_double_dash,tags_array_R,current_v.inci.I,current_v.inci.tags_)
+                
+                [I_double_dash,Vcap,E1cap,E2cap]=op.merge_matrices(I_dash,I_R)
+                
+                [I_R,Vcap,E1cap,E2cap]=op.merge_matrices(I_double_dash,current_v.inci.I)
+                
                 [Ec,I_R]=op.Order_Matrix(I_R,E1cap,E2cap,Vcap)            
-                v_found.inci.I=I_R
-                v_found.inci.tags_array=tags_array_R
+                
+                current_v.inci.I=I_R
                 #v_found.inci.tags_array=tags_array_R
                 ##UPDATE tags_array for Rk
                 #Do second step on vertex visit
 
-                current_v=v_found
                 second_step_on_vertex_visit()   
 
-                v_found.inci.I=I_R   
-                v_found.inci.tags_array=tags_array_R
+                current_v.inci.I=I_R   
                 #publish updated vertex info to /vertices topic
                 for count,v in enumerate(vertex_array):
-                    if v_found.tag==v.tag:
-                        vertex_array[count]=v_found
+                    if current_v.x==v.x:
+                        vertex_array[count]=current_v
 
                 pub_vertices.publish(vertex_array)             
             
@@ -327,7 +332,7 @@ def main():
 
         
 if  __name__ == "__main__":
-    rospy.init_node('random_mover',anonymous=False)   
+    rospy.init_node('random_mover',anonymous=False) 
     ###########Global Variables############
     bot_no=0
     q=[0,0,0,0]
@@ -349,11 +354,10 @@ if  __name__ == "__main__":
     
 
     previous_vertex=vertex_info()
-    previous_value=0
-    current_value=0
     next_vertex=vertex_info()
     current_v=vertex_info()
-
+    traverse_q=deque()
+    
     odom=Odometry()
     data=LaserScan()
     odom_feedback=Odometry()
@@ -367,7 +371,6 @@ if  __name__ == "__main__":
     vertex_array=[]
     Inci_R=incidence()
     I_R=Inci_R.I
-    tags_array_R=Inci_R.tags_array
     E1cap=0
     E2cap=0
     Vcap=0

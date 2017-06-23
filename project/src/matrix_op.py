@@ -62,19 +62,42 @@ class matrix_op:
     adj=np.zeros((R,R))
     i=0
     j=0
+    count=0
     for c in range(0,C):
      for r in range(0,R):
          if I[r][c]!=0:
              temp.append(r)
-    
-     i=temp[0]
-     j=temp[1]
-     adj[i][j]=1
-     adj[j][i]=1
+             count+=1
+     if count==2:
+        i=temp[0]
+        j=temp[1]
+        adj[i][j]=1
+        adj[j][i]=1
      temp=[]
+     count=0
+
     return adj 
    
-   def merge_matrices(self,I1,I2):#tags_I1,tags_I2):   
+   ##Sarat's function
+   def vertex_tag(I,A):
+    vertex_tag_I=[];
+    a=A.shape[0]
+    for j in range(I.shape[0]):
+        for i in range(a):
+            B_1 = I[j,:];
+            C_1 = A[i,:];
+            B_2 = B_1[B_1!=0];
+            B = np.abs(B_2);
+            C = C_1[C_1!=0]
+            if np.array_equal(np.sort(np.intersect1d(B,C)),np.sort(B))==True:
+                vertex_tag_I.append(i);
+                
+    return vertex_tag_I
+
+
+
+
+   def merge_matrices(self,I1,I2):
     global E1cap,E2cap,Vcap
     V1=I1.shape[0]
     if len(I1.shape)!=1:
@@ -93,9 +116,6 @@ class matrix_op:
     delj=[]
     deli=[]
 
-    #tags=np.append(tags_I1,tags_I2)
-    #print "Tags"+str(tags)
-    ###I=[[I1,0],[0,I2]]
     I=np.row_stack((np.column_stack((I1,np.zeros((V1,E2)))),np.column_stack((np.zeros((V2,E1)),I2))))
     print "I:"+str(I)
     for i1 in range(0,V1):
@@ -128,7 +148,7 @@ class matrix_op:
     I=np.delete(I,(deli),axis=0)
     I=np.delete(I,(delj),axis=1)
     #tags=np.delete(tags,(deli),axis=0)
-    return [I,Vcap,E1cap,E2cap,tags]  
+    return [I,Vcap,E1cap,E2cap]  
 
    def Order_Matrix(self,I_Merged,E1cap,E2cap,Vcap):
         global E1cap,E2cap,Vcap
