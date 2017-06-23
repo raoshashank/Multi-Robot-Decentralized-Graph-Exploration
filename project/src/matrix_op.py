@@ -79,7 +79,7 @@ class matrix_op:
     return adj 
    
    ##Sarat's function
-   def vertex_tag(I,A):
+   def vertex_tag(self,I,A):
     vertex_tag_I=[];
     a=A.shape[0]
     for j in range(I.shape[0]):
