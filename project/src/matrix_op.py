@@ -77,28 +77,16 @@ class matrix_op:
      count=0
 
     return adj 
-   
-   ##Sarat's function
-   def vertex_tag(self,I,A):
-    vertex_tag_I=[];
-    a=A.shape[0]
-    for j in range(I.shape[0]):
-        for i in range(a):
-            B_1 = I[j,:];
-            C_1 = A[i,:];
-            B_2 = B_1[B_1!=0];
-            B = np.abs(B_2);
-            C = C_1[C_1!=0]
-            if np.array_equal(np.sort(np.intersect1d(B,C)),np.sort(B))==True:
-                vertex_tag_I.append(i);
-                
-    return vertex_tag_I
 
 
 
 
    def merge_matrices(self,I1,I2):
-    global E1cap,E2cap,Vcap
+    vert_col_I1=I1[:,0]
+    vert_col_I2=I2[:,0]
+    I1=I1[:,1:I1.shape[1]]
+    I2=I2[:,1:I2.shape[1]]
+
     V1=I1.shape[0]
     if len(I1.shape)!=1:
         E1=I1.shape[1]
@@ -113,16 +101,18 @@ class matrix_op:
     E1cap=E1
     E2cap=E2
     Vcap=V1+V2
+
     delj=[]
     deli=[]
 
     I=np.row_stack((np.column_stack((I1,np.zeros((V1,E2)))),np.column_stack((np.zeros((V2,E1)),I2))))
-    print "I:"+str(I)
+    vert_col=np.append(vert_col_I1,vert_col_I2)
+
     for i1 in range(0,V1):
      for j1 in range(0,E1):
         for i2 in range(V1,V1+V2-1):
           for j2 in range(E1,E1+E2-1): 
-            if tags[i1]==tags[i2] and np.absolute(I[i1,j1])==np.absolute(I[i2,j2]) :
+            if vert_col[i1].tag==vert_col[i2].tag and np.absolute(I[i1,j1])==np.absolute(I[i2,j2]) :
               if np.sign(I[i1,j1])!=np.sign(I[i2,j2]) :
                   I[i2,j2]=-np.absolute(I[i1,j1])
                   I[i1,j1]=I[i2,j2]
@@ -147,11 +137,11 @@ class matrix_op:
     
     I=np.delete(I,(deli),axis=0)
     I=np.delete(I,(delj),axis=1)
-    #tags=np.delete(tags,(deli),axis=0)
+    vert_col=np.delete(vert_col,(deli),axis=0)
+    I=np.row_stack((vert_col,I))
     return [I,Vcap,E1cap,E2cap]  
 
    def Order_Matrix(self,I_Merged,E1cap,E2cap,Vcap):
-        global E1cap,E2cap,Vcap
         I1=I_Merged[:,0:E1cap]
         I2=I_Merged[:,E1cap:E1cap+E2cap-1]
         I1_completed=self.completed(I1)
