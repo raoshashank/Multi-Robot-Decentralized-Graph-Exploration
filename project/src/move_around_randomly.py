@@ -96,9 +96,9 @@ def second_step_on_vertex_visit():
 
         
          #circular shifting   
-         b=I_R[:,Ec:E1cap+E2cap-1]
+         b=I_R[:,Ec+1:E1cap+E2cap]
          b=np.roll(b,-1*(b.shape[1]-1))
-         I_R=I_R[:,0:Ec]
+         I_R=I_R[:,0:Ec+1]
          I_R=np.column_stack((I_R,b))
 
          previous_vertex=current_v
@@ -246,7 +246,7 @@ def main():
     global cmd,data,flag,servcaller,servcaller2,node_found,check,mid_avg,params,params2,heading,odom_feedback,vertex_array
     global E1cap,E2cap,Vcap,I_R,Ec
     global current_v,previous_vertex
-    
+    Ec=0
     while not rospy.is_shutdown():
         if check!=[]:
             count=0
@@ -269,7 +269,7 @@ def main():
                     rospy.loginfo("Found new node!!")
                     v_found.x=v_x
                     v_found.y=v_y
-                    v_found.inci.I=initialize_vertex_I()
+                    v_found.I=initialize_vertex_I()
                     v_found.tag="x"+str(v_x)+"y"+str(v_y)
 
                 else:
@@ -277,8 +277,7 @@ def main():
                 current_v=v_found
                 ##First Step
                 I_double_dash=[]
-                I_dash=np.zeros((2,1))
-                I_dash=[]                
+                I_dash=np.zeros((2,1))             
                 err=0.1
             
                 #Finding I'
@@ -301,23 +300,17 @@ def main():
 
                 vert_col_dash=[previous_vertex,current_v]
                 I_dash=np.column_stack((vert_col_dash,I_dash))
-
-                Ec=0
                 
+                ##FIRST STEP ON VERTEX VISIT##
                 [I_double_dash,Vcap,E1cap,E2cap]=op.merge_matrices(I_dash,I_R)
-                
                 [I_R,Vcap,E1cap,E2cap]=op.merge_matrices(I_double_dash,current_v.I)
-                
                 [Ec,I_R[:,1:I_R.shape[1]]]=op.Order_Matrix(I_R[:,1:I_R.shape[1]],E1cap,E2cap,Vcap)            
-                
                 current_v.I=I_R
-                #v_found.inci.tags_array=tags_array_R
-                ##UPDATE tags_array for Rk
-                #Do second step on vertex visit
-
+                
+                #SECOND STEP ON VERTEX VISIT##
                 second_step_on_vertex_visit()   
-
                 current_v.I=I_R   
+                
                 #publish updated vertex info to /vertices topic
                 for count,v in enumerate(vertex_array):
                     if current_v.x==v.x:
