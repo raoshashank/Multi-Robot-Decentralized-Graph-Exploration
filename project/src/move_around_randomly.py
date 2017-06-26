@@ -60,12 +60,13 @@ def second_step_on_vertex_visit():
          if len(traverse_q)==0 or op.non_zero_element_count(traverse_q[len(traverse_q-1)])==2:
             traverse_q=deque()    
             next_edge=I_R[:,E1cap+E2cap-1]
-        
+            turn_at_dest=0
             ##identify index of known edge on next vertex for passing to dijkstra
          
             for i in range(len(next_edge)):
                 if next_edge[i]!=0:
                     next_vertex=I_R[i][0]
+                    turn_at_dest=next_edge[i]
                     break
       
             #index of current edge for dijsktra
@@ -75,7 +76,7 @@ def second_step_on_vertex_visit():
 
             adj=op.inci_to_adj(I_R)
             G=nx.from_numpy_matrix(adj,create_using=nx.DiGraph()) 
-            path=nx.dijkstra(G,i,j)
+            path=nx.dijkstra_path(G,i,j)
             ##Generated path has indices of vertices in adjacency matrix which same as in incidence matrix
             del path[0]       #First vertex is current vertex always in result  
             ret_path=[]
@@ -84,12 +85,12 @@ def second_step_on_vertex_visit():
         
             ##path containing vertex objects generated      
             ##TO Generate path containing edges to push into queue
-            for i in range(len(ret_path-1)):
+            for i in range(len(ret_path)-1):
                 #find edge with ret_path[i] and ret_path[i+1]
                     e=edge_from_v(ret_path[i],ret_path[i+1])
                     traverse_q.append(I_R[:,e])
 
-            
+            rospy.loginfo(traverse_q)
             
             ##Queue updated
          if op.non_zero_element(I_R[:,E1cap+E2cap-1])>0:
@@ -101,13 +102,22 @@ def second_step_on_vertex_visit():
          b=np.roll(b,-1*(b.shape[1]-1))
          I_R=I_R[:,0:Ec+1]
          I_R=np.column_stack((I_R,b))
-
          previous_vertex=current_v
-         next_vertex=traverse_q[0]
-         turn_to_next_vertex(current_v,next_vertex)
+##If robot arrives at 1st vertex of new edge,next vertex=current vertex and traverse_q will be empty
+##So next step is to extract the non zero element in the next_edge column and orient to that angle
+         if len(traverse_q)==0:
+            rospy.loginfo("Traversing new edge at angle:"+str(turn_at_dest))
+            orient_to_heading(abs(turn_at_dest))
 
+         else:
+            next_vertex=traverse_q[0]
+            turn_to_next_vertex(current_v,next_vertex)
+         rospy.loginfo("Entering new edge:")
+         forward_by_half_lane_width()   
+            
         
 def orient_to_heading(dir):
+
     global flag,odom_feedback,heading_cmd,heading,q,cmd ,done,angle,initial_heading,heading_error
     q=[0,0,0,0]
     done=0
@@ -133,9 +143,8 @@ def orient_to_heading(dir):
             cmd.angular.z=-0.8*heading_error
             pub.publish(cmd)
 
-
 def forward_by_half_lane_width():
-    global data,check,odom_feedback,lane_width,pub
+    global data,check,odom_feedback,lane_width,pub,flag
 
     x_start=odom_feedback.pose.pose.position.x
     y_start=odom_feedback.pose.pose.position.y
@@ -143,6 +152,7 @@ def forward_by_half_lane_width():
     error=0
     goal_dst=lane_width/2+delta
     dst=0
+    #flag=0
     while dst<=goal_dst:
        go_forward()
        dst=sqrt((odom_feedback.pose.pose.position.x-x_start)**2+(odom_feedback.pose.pose.position.y-y_start)**2)
