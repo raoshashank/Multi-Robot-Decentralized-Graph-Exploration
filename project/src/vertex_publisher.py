@@ -1,12 +1,41 @@
 #! /usr/bin/env python
-from project.msg import vertices,vertex_info
 import rospy
+from project.msg import vertices,vertex_info
 from std_msgs.msg import Int32
+from matrix_op import matrix_op
 import numpy as np
+import pickle
+
+def callback(msg):
+  global message,pub,rate
+  message=msg
+  main()
+
+  
+
 rospy.init_node('vertex_publisher')
-pub = rospy.Publisher('/vertices', vertices, queue_size=1)
-rate = rospy.Rate(2)
-temp=vertices()
+
+def main():
+  global message
+  while not rospy.is_shutdown():
+    rate.sleep()
+    pub.publish(message)
+
+
+if __name__=='__main__': 
+  rate=rospy.Rate(20)
+  pub=rospy.Publisher('/vertices',vertices,queue_size=10)
+  sub=rospy.Subscriber('/vertices',vertices,callback)
+  message=vertices()
+  main()
+  rospy.spin()   
+
+
+
+
+
+
+"""
 temp.v=[]
 v1=vertex_info()
 v1.x=-4.5
@@ -95,7 +124,4 @@ v1.inci.tags_array=[]
 temp.v.append(v1)
 v1=vertex_info()
 
-
-while not rospy.is_shutdown(): 
-  pub.publish(temp)
-  rate.sleep()
+"""

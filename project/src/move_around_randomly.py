@@ -6,11 +6,11 @@ from math import pi,atan2,cos,sqrt,pow
 from random import randint
 import numpy as np
 from nav_msgs.msg import Odometry
-from project.srv import direction,directionRequest,directionResponse,dirturn,dirturnRequest,dirturnResponse,new_direction,new_directionRequest,new_directionResponse 
 from matrix_op import matrix_op
 from project.msg import vertex_info,vertices,incidence
 from collections import deque
 import networkx as nx   
+import pickle
 
 
 
@@ -50,20 +50,21 @@ def second_step_on_vertex_visit():
      global traverse_q,E1cap,E2cap,Vcap,I_R,Ec
      global current_v,previous_vertex,next_vertex
      flag=0
-     if op.non_zero_element_count(I_R[:,E1cap+E2cap])==2:
-        break
+     rospy.loginfo(I_R[:,E1cap+E2cap-1])
+     if op.non_zero_element_count(I_R[:,E1cap+E2cap-1])==2:
+        return
         rospy.loginfo("Exploration Complete!!")
         
      else:
             
          if len(traverse_q)==0 or op.non_zero_element_count(traverse_q[len(traverse_q-1)])==2:
             traverse_q=deque()    
-            next_edge=I_R[:,E1cap+E2cap]
+            next_edge=I_R[:,E1cap+E2cap-1]
         
             ##identify index of known edge on next vertex for passing to dijkstra
          
-            for i in next_edge:
-                if i!=0:
+            for i in range(len(next_edge)):
+                if next_edge[i]!=0:
                     next_vertex=I_R[i][0]
                     break
       
@@ -91,12 +92,12 @@ def second_step_on_vertex_visit():
             
             
             ##Queue updated
-         if op.non_zero_element(I_R[:,E1cap+E2cap])>0:
-            I_R[:,E1cap+E2cap]=-I_R[:,E1cap+E2cap]
+         if op.non_zero_element(I_R[:,E1cap+E2cap-1])>0:
+            I_R[:,E1cap+E2cap-1]=-I_R[:,E1cap+E2cap-1]
 
         
          #circular shifting   
-         b=I_R[:,Ec+1:E1cap+E2cap]
+         b=I_R[:,Ec+1:E1cap+E2cap-1]
          b=np.roll(b,-1*(b.shape[1]-1))
          I_R=I_R[:,0:Ec+1]
          I_R=np.column_stack((I_R,b))
@@ -127,7 +128,6 @@ def orient_to_heading(dir):
     
     
         if abs(heading_error) < 0.001:
-            rospy.loginfo("Turn done!")
             done=1
         else:
             cmd.angular.z=-0.8*heading_error
@@ -149,7 +149,6 @@ def forward_by_half_lane_width():
 
     cmd=Twist()
     pub.publish(cmd)
-    rospy.loginfo("Escaped")
 
     
 def go_forward():
@@ -227,6 +226,7 @@ def initialize_vertex_I():
     global heading,range_thresh
     I=[]
     err=0.1
+    rospy.loginfo("Initializing new vertex!")
     ##Angles to be checked 0(=2pi),pi/2,-pi(=pi),-pi/2(3pi/2) in order
     if data[0]>range_thresh:
         I.append(2*pi)
@@ -238,12 +238,13 @@ def initialize_vertex_I():
     if data[0]>range_thresh:
         I.append(3*pi/2)
     orient_to_heading(pi/2)
+    I=np.array([I])
     rospy.loginfo(I)
     return I
 
 
 def main():
-    global cmd,data,flag,servcaller,servcaller2,node_found,check,mid_avg,params,params2,heading,odom_feedback,vertex_array
+    global cmd,data,flag,node_found,check,mid_avg,heading,odom_feedback,vertex_array
     global E1cap,E2cap,Vcap,I_R,Ec
     global current_v,previous_vertex
     Ec=0
@@ -259,64 +260,76 @@ def main():
                 if count>=2:
                     forward_by_half_lane_width()
                 orient_to_heading(pi/2)
-                rospy.loginfo("I'M AT NODE!")        
-                v_found=vertex_info()
+                current_v=vertex_info()
+                current_v_I=[]
+                ###temp for doing computation before storing in pickle
                 v_x=odom_feedback.pose.pose.position.x
                 v_y=odom_feedback.pose.pose.position.y
-                v_found=check_for_vertex_in_array(v_x,v_y)
+                current_v=check_for_vertex_in_array(v_x,v_y)
                 ##New Vertex discovery
-                if v_found.tag=="empty":
-                    rospy.loginfo("Found new node!!")
-                    v_found.x=v_x
-                    v_found.y=v_y
-                    v_found.I=initialize_vertex_I()
-                    v_found.tag="x"+str(v_x)+"y"+str(v_y)
+                if current_v.tag=="empty":
+                    current_v.x=v_x
+                    current_v.y=v_y
+                    current_v_I=initialize_vertex_I()
+                    temp=np.array([current_v])
+                    current_v_I=np.column_stack((temp,current_v_I))
+                    current_v.I=pickle.dumps(current_v_I)                    
+                    current_v.tag="x"+str(v_x)+"y"+str(v_y)
+                    rospy.loginfo("Found new node!!@"+current_v.tag)
 
                 else:
-                    rospy.loginfo("I'm at node :"+v_found.tag)
-                current_v=v_found
-                ##First Step
-                I_double_dash=[]
-                I_dash=np.zeros((2,1))             
+                    rospy.loginfo("I'm at node :"+current_v.tag)
+               
+                I_double_dash=I_R
+                I_dash=[]             
                 err=0.1
-            
+                
                 #Finding I'
-                if abs(heading-0)<err:
+                if previous_vertex.tag!='': 
+                 if abs(heading-0)<err:
                     I_dash.append(2*pi)
                     I_dash.append(pi)
                 
-                elif abs(heading-pi/2)<err:
+                 elif abs(heading-pi/2)<err:
                     I_dash.append(pi/2)
                     I_dash.append(3*pi/2)
                 
-                elif abs(heading-pi)<err:
+                 elif abs(heading-pi)<err:
                     I_dash.append(pi)
                     I_dash.append(2*pi)
                 
-                elif abs(heading+pi/2)<err:
+                 elif abs(heading+pi/2)<err:
                     I_dash.append(3*pi/2)
                     I_dash.append(pi/2)
-
-
-                vert_col_dash=[previous_vertex,current_v]
-                I_dash=np.column_stack((vert_col_dash,I_dash))
+                 vert_col_dash=np.array([previous_vertex,current_v])
+                 I_dash=np.array([I_dash])
+                 I_dash=np.column_stack((vert_col_dash,I_dash))
                 
                 ##FIRST STEP ON VERTEX VISIT##
-                [I_double_dash,Vcap,E1cap,E2cap]=op.merge_matrices(I_dash,I_R)
-                [I_R,Vcap,E1cap,E2cap]=op.merge_matrices(I_double_dash,current_v.I)
+                 [I_double_dash,Vcap,E1cap,E2cap]=op.merge_matrices(I_dash,I_R)
+
+                [I_R,Vcap,E1cap,E2cap]=op.merge_matrices(current_v_I,I_double_dash)
+                #rospy.loginfo(I_R)
                 [Ec,I_R[:,1:I_R.shape[1]]]=op.Order_Matrix(I_R[:,1:I_R.shape[1]],E1cap,E2cap,Vcap)            
-                current_v.I=I_R
+                #rospy.loginfo("Ec:"+str(Ec))
+                #rospy.loginfo("First step results: I_R:"+str(I_R[:,1:I_R.shape[1]])+" E1cap:"+str(E1cap)+" E2cap"+str(E2cap)+" Vcap:"+str(Vcap))
+                rospy.loginfo(I_R)
+                current_v_I=I_R
                 
                 #SECOND STEP ON VERTEX VISIT##
                 second_step_on_vertex_visit()   
-                current_v.I=I_R   
-                
-                #publish updated vertex info to /vertices topic
-                for count,v in enumerate(vertex_array):
-                    if current_v.x==v.x:
-                        vertex_array[count]=current_v
+                current_v_I=I_R   
+                rospy.loginfo("Second Step Done!")
+                rospy.loginfo(I_R)
 
-                pub_vertices.publish(vertex_array)             
+                #publish updated vertex info to /vertices topicx
+                for count,v in enumerate(vertex_array):
+                    if current_v.tag==v.x.tag:
+                        del vertex_array[count]
+                current_v.I=pickle.dumps(current_v_I)
+                vertex_array.append(current_v)        
+                pub_vertices.publish(vertex_array)    
+                rospy.loginfo("updated vertex_array")         
             
             else:
                 go_forward()
@@ -341,9 +354,6 @@ if  __name__ == "__main__":
     
     angular_velocity_z=0
     
-    params=directionRequest()
-    params2=dirturnRequest()
-    
     rate=rospy.Rate(5)
     
 
@@ -363,22 +373,13 @@ if  __name__ == "__main__":
     range_thresh=2
     lane_width=2
     vertex_array=[]
-    Inci_R=incidence()
-    I_R=Inci_R.I
+    I_R=np.array([[]])
     E1cap=0
     E2cap=0
     Vcap=0
     
     ###########Global Variables############
-
-    ##Service1 for deciding direction
-    rospy.wait_for_service('/direction_service_server')
-    servcaller=rospy.ServiceProxy('/direction_service_server',new_direction)        
-    
-    #Service2 for turning in the decided direction
-    rospy.wait_for_service('/turn_service_server')
-    servcaller2=rospy.ServiceProxy('/turn_service_server',dirturn)
-    
+   
     sub_odom=rospy.Subscriber('/bot_0/odom',Odometry,odom_callback)
     pub=rospy.Publisher('/bot_0/cmd_vel',Twist,queue_size=1)
     

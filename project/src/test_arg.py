@@ -1,8 +1,12 @@
 import numpy as np
 import rospy
 from sys import argv
+from project.msg import vertices,vertex_info
 
-script, first= argv
+def callback(msg):
+    rospy.loginfo(msg)
 
-print("the script is called:", (script))
-print("your first variable is:", (first))
+
+rospy.init_node('sub')
+rospy.Subscriber("/vertices", vertices, callback)
+rospy.spin()

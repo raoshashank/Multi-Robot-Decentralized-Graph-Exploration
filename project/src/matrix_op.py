@@ -3,11 +3,11 @@ import rospy
 import numpy as np
 
 class matrix_op:
-   def non_zero_element(I):
+   def non_zero_element(self,I):
        i=[x for x in I if x!=0]
        return i 
                 
-   def non_zero_element_count(I):
+   def non_zero_element_count(self,I):
        count=0
        for i in I:
            if i==0:
@@ -82,8 +82,14 @@ class matrix_op:
 
 
    def merge_matrices(self,I1,I2):
+    #when I_R is empty ie; at start of exploration
+    if I2.shape[1]==0:
+        return [I1,I1.shape[0],I1.shape[1],0]
+
     vert_col_I1=I1[:,0]
     vert_col_I2=I2[:,0]
+    
+
     I1=I1[:,1:I1.shape[1]]
     I2=I2[:,1:I2.shape[1]]
 
