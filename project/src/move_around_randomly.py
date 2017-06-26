@@ -118,17 +118,13 @@ def second_step_on_vertex_visit():
         
 def orient_to_heading(dir):
 
-    global flag,odom_feedback,heading_cmd,heading,q,cmd ,done,angle,initial_heading,heading_error
+    global flag,odom_feedback,heading_cmd,heading,q,cmd,done,angle,initial_heading,heading_error
     q=[0,0,0,0]
     done=0
     heading_cmd=dir
     while done!=1 and not rospy.is_shutdown():
         cmd=Twist()
-        q[0]=odom_feedback.pose.pose.orientation.w
-        q[1]=odom_feedback.pose.pose.orientation.x
-        q[2]=odom_feedback.pose.pose.orientation.y
-        q[3]=odom_feedback.pose.pose.orientation.z  
-        heading=atan2(2*(q[0]*q[3]+q[1]*q[2]),1-2*(q[2]*q[2]+q[3]*q[3]))
+        heading=find_heading()
         heading_error=heading_cmd-heading
 
         if heading_error>pi:
@@ -142,6 +138,7 @@ def orient_to_heading(dir):
         else:
             cmd.angular.z=-0.8*heading_error
             pub.publish(cmd)
+    initial_heading=find_heading()
 
 def forward_by_half_lane_width():
     global data,check,odom_feedback,lane_width,pub,flag
@@ -152,7 +149,6 @@ def forward_by_half_lane_width():
     error=0
     goal_dst=lane_width/2+delta
     dst=0
-    #flag=0
     while dst<=goal_dst:
        go_forward()
        dst=sqrt((odom_feedback.pose.pose.position.x-x_start)**2+(odom_feedback.pose.pose.position.y-y_start)**2)
@@ -160,17 +156,20 @@ def forward_by_half_lane_width():
     cmd=Twist()
     pub.publish(cmd)
 
-    
-def go_forward():
-    global q,cmd,odom_feedback,flag,rate,heading,initial_heading,heading_error,angular_velocity_z,linear_velocity_x
+
+def find_heading():
+    global odom_feedback
+    q=[0,0,0,0]
     q[0]=odom_feedback.pose.pose.orientation.w
     q[1]=odom_feedback.pose.pose.orientation.x
     q[2]=odom_feedback.pose.pose.orientation.y
     q[3]=odom_feedback.pose.pose.orientation.z  
     heading=atan2(2*(q[0]*q[3]+q[1]*q[2]),1-2*(q[2]*q[2]+q[3]*q[3]))
-    if flag==0:
-        initial_heading=heading
-        flag=1
+    return heading
+
+def go_forward():
+    global q,cmd,odom_feedback,flag,rate,heading,initial_heading,heading_error,angular_velocity_z,linear_velocity_x
+    heading=find_heading()
     heading_error=initial_heading-heading
     if heading_error>pi:
         heading_error=heading_error-2*pi
@@ -254,10 +253,11 @@ def initialize_vertex_I():
 
 
 def main():
-    global cmd,data,flag,node_found,check,mid_avg,heading,odom_feedback,vertex_array
+    global cmd,data,flag,node_found,check,mid_avg,heading,odom_feedback,vertex_array,initial_heading
     global E1cap,E2cap,Vcap,I_R,Ec
     global current_v,previous_vertex
     Ec=0
+    initial_heading=find_heading()
     while not rospy.is_shutdown():
         if check!=[]:
             count=0
@@ -355,13 +355,13 @@ if  __name__ == "__main__":
     q=[0,0,0,0]
     flag=0
     node_found=0
-    initial_heading=0.0 
+    initial_heading=0.0
     heading_error=0.0
+
     heading=0.0  
     check=[]
     interval_for_angle_measurement=10
     linear_velocity_x=0.1
-    
     angular_velocity_z=0
     
     rate=rospy.Rate(5)
@@ -397,6 +397,7 @@ if  __name__ == "__main__":
     
     sub_vertex=rospy.Subscriber('/vertices',vertices,vertices_callback)
     pub_vertices=rospy.Publisher('/vertices',vertices,queue_size=1)
-
+    rate.sleep()
+    rate.sleep()
     main()
     rospy.spin()
