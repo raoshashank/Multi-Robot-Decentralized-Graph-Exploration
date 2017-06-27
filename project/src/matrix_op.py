@@ -81,6 +81,7 @@ class matrix_op:
 
 
 
+   
    def merge_matrices(self,I1,I2):
     #when I_R is empty ie; at start of exploration
     if I2.shape[1]==0:
@@ -88,14 +89,8 @@ class matrix_op:
 
     vert_col_I1=I1[:,0]
     vert_col_I2=I2[:,0]
-
-    #rospy.loginfo("vI1:"+str(vert_col_I1)+"vI2:"+str(vert_col_I2)) 
-    rospy.loginfo("vI1:"+str(vert_col_I1.shape)+"vI2:"+str(vert_col_I2.shape))  
-
     I1=I1[:,1:I1.shape[1]]
     I2=I2[:,1:I2.shape[1]]
-
-    rospy.loginfo("I1:"+str(I1)+"I2"+str(I2))
     V1=I1.shape[0]
     
     if len(I1.shape)!=1:
@@ -111,45 +106,43 @@ class matrix_op:
     E1cap=E1
     E2cap=E2
     Vcap=V1+V2
-
+    
     delj=[]
     deli=[]
-
     I=np.row_stack((np.column_stack((I1,np.zeros((V1,E2)))),np.column_stack((np.zeros((V2,E1)),I2))))
     vert_col=np.append(vert_col_I1,vert_col_I2)
-    rospy.loginfo("merging..")
     for i1 in range(0,V1):
      for j1 in range(0,E1):
-        for i2 in range(V1,V1+V2-1):
-          for j2 in range(E1,E1+E2-1): 
+        for i2 in range(V1,V1+V2):
+          for j2 in range(E1,E1+E2): 
             if vert_col[i1].tag==vert_col[i2].tag and np.absolute(I[i1,j1])==np.absolute(I[i2,j2]) :
               if np.sign(I[i1,j1])!=np.sign(I[i2,j2]) :
                   I[i2,j2]=-np.absolute(I[i1,j1])
                   I[i1,j1]=I[i2,j2]
-              if non_zero_element_count(I[V1:(V1+V2-1),j2])==2 :
+              if self.non_zero_element_count(I[V1:V1+V2,j2])==2 :
                   delj.append(j1)
                   E1cap-=1
               else:
-                  if non_zero_element_count(I[0:V1,j1])==2:
+                  if self.non_zero_element_count(I[0:V1,j1])==2:
                       delj.append(j2)
                       E2cap-=1
                   else:
                       delj.append(j1)
                       E1cap-=1
                       
-              if non_zero_element_count (I[V1:(V1+V2-1),j1])<2 :
-                  I[V1:(V1+V2-1),j1]=I[V1:(V1+V2-1),j1]+I[V1:(V1+V2-1),j2]
+              if self.non_zero_element_count (I[V1:V1+V2,j1])<2 :
+                  I[V1:V1+V2,j1]=I[V1:V1+V2,j1]+I[V1:V1+V2,j2]
               
-              if non_zero_element_count(I[0:V1,j2])<2:
+              if self.non_zero_element_count(I[0:V1,j2])<2:
                   I[0:V1,j2]=I[0:V1,j2]+I[0:V1,j1]
               
               deli.append(i1)
-    
+
     I=np.delete(I,(deli),axis=0)
     I=np.delete(I,(delj),axis=1)
     vert_col=np.delete(vert_col,(deli),axis=0)
-    rospy.loginfo(I)
-    I=np.row_stack((vert_col,I))
+    I=np.column_stack((vert_col.transpose(),I))
+    #last index with vertex column index is I[:,E1cap+E2cap]
     return [I,Vcap,E1cap,E2cap]  
 
    def Order_Matrix(self,I_Merged,E1cap,E2cap,Vcap):

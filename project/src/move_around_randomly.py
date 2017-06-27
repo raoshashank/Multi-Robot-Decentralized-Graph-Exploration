@@ -49,8 +49,7 @@ def edge_from_v(v1,v2):
 def second_step_on_vertex_visit():
      global traverse_q,E1cap,E2cap,Vcap,I_R,Ec
      global current_v,previous_vertex,next_vertex
-     #rospy.loginfo(I_R[:,E1cap+E2cap-1])
-     if op.non_zero_element_count(I_R[:,E1cap+E2cap-1])==2:
+     if op.non_zero_element_count(I_R[:,E1cap+E2cap])==2:
         rospy.loginfo("Exploration Complete!!")
         return
         
@@ -58,7 +57,7 @@ def second_step_on_vertex_visit():
             
          if len(traverse_q)==0 or op.non_zero_element_count(traverse_q[len(traverse_q-1)])==2:
             traverse_q=deque()    
-            next_edge=I_R[:,E1cap+E2cap-1]
+            next_edge=I_R[:,E1cap+E2cap]
             turn_at_dest=0
             ##identify index of known edge on next vertex for passing to dijkstra
          
@@ -92,8 +91,8 @@ def second_step_on_vertex_visit():
             #rospy.loginfo(traverse_q)
             
             ##Queue updated
-     if op.non_zero_element(I_R[:,E1cap+E2cap-1])>0:
-            I_R[:,E1cap+E2cap-1]=-I_R[:,E1cap+E2cap-1]
+     if op.non_zero_element(I_R[:,E1cap+E2cap])>0:
+            I_R[:,E1cap+E2cap]=-I_R[:,E1cap+E2cap]
 
         
      #circular shifting   
