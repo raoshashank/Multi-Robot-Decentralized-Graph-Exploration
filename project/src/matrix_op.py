@@ -88,12 +88,16 @@ class matrix_op:
 
     vert_col_I1=I1[:,0]
     vert_col_I2=I2[:,0]
-    
+
+    #rospy.loginfo("vI1:"+str(vert_col_I1)+"vI2:"+str(vert_col_I2)) 
+    rospy.loginfo("vI1:"+str(vert_col_I1.shape)+"vI2:"+str(vert_col_I2.shape))  
 
     I1=I1[:,1:I1.shape[1]]
     I2=I2[:,1:I2.shape[1]]
 
+    rospy.loginfo("I1:"+str(I1)+"I2"+str(I2))
     V1=I1.shape[0]
+    
     if len(I1.shape)!=1:
         E1=I1.shape[1]
     else:
@@ -113,7 +117,7 @@ class matrix_op:
 
     I=np.row_stack((np.column_stack((I1,np.zeros((V1,E2)))),np.column_stack((np.zeros((V2,E1)),I2))))
     vert_col=np.append(vert_col_I1,vert_col_I2)
-
+    rospy.loginfo("merging..")
     for i1 in range(0,V1):
      for j1 in range(0,E1):
         for i2 in range(V1,V1+V2-1):
@@ -144,6 +148,7 @@ class matrix_op:
     I=np.delete(I,(deli),axis=0)
     I=np.delete(I,(delj),axis=1)
     vert_col=np.delete(vert_col,(deli),axis=0)
+    rospy.loginfo(I)
     I=np.row_stack((vert_col,I))
     return [I,Vcap,E1cap,E2cap]  
 

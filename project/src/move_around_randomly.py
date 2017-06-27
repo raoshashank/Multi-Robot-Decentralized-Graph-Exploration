@@ -49,11 +49,10 @@ def edge_from_v(v1,v2):
 def second_step_on_vertex_visit():
      global traverse_q,E1cap,E2cap,Vcap,I_R,Ec
      global current_v,previous_vertex,next_vertex
-     flag=0
-     rospy.loginfo(I_R[:,E1cap+E2cap-1])
+     #rospy.loginfo(I_R[:,E1cap+E2cap-1])
      if op.non_zero_element_count(I_R[:,E1cap+E2cap-1])==2:
-        return
         rospy.loginfo("Exploration Complete!!")
+        return
         
      else:
             
@@ -90,30 +89,30 @@ def second_step_on_vertex_visit():
                     e=edge_from_v(ret_path[i],ret_path[i+1])
                     traverse_q.append(I_R[:,e])
 
-            rospy.loginfo(traverse_q)
+            #rospy.loginfo(traverse_q)
             
             ##Queue updated
-         if op.non_zero_element(I_R[:,E1cap+E2cap-1])>0:
+     if op.non_zero_element(I_R[:,E1cap+E2cap-1])>0:
             I_R[:,E1cap+E2cap-1]=-I_R[:,E1cap+E2cap-1]
 
         
-         #circular shifting   
-         b=I_R[:,Ec+1:E1cap+E2cap-1]
-         b=np.roll(b,-1*(b.shape[1]-1))
-         I_R=I_R[:,0:Ec+1]
-         I_R=np.column_stack((I_R,b))
-         previous_vertex=current_v
-##If robot arrives at 1st vertex of new edge,next vertex=current vertex and traverse_q will be empty
-##So next step is to extract the non zero element in the next_edge column and orient to that angle
-         if len(traverse_q)==0:
-            rospy.loginfo("Traversing new edge at angle:"+str(turn_at_dest))
-            orient_to_heading(abs(turn_at_dest))
+     #circular shifting   
+     b=I_R[:,Ec+1:E1cap+E2cap]
+     b=np.roll(b,-1*(b.shape[1]-1))
+     I_R=I_R[:,0:Ec+1]
+     I_R=np.column_stack((I_R,b))
+     previous_vertex=current_v
+     ##If robot arrives at 1st vertex of new edge,next vertex=current vertex and traverse_q will be empty
+     ##So next step is to extract the non zero element in the next_edge column and orient to that angle
+     if len(traverse_q)==0:
+        rospy.loginfo("Traversing new edge at angle:"+str(turn_at_dest))
+        orient_to_heading(abs(turn_at_dest))
 
-         else:
-            next_vertex=traverse_q[0]
-            turn_to_next_vertex(current_v,next_vertex)
-         rospy.loginfo("Entering new edge:")
-         forward_by_half_lane_width()   
+     else:
+        next_vertex=traverse_q[0]
+        turn_to_next_vertex(current_v,next_vertex)
+        rospy.loginfo("Entering new edge:")
+     forward_by_half_lane_width()   
             
         
 def orient_to_heading(dir):
@@ -196,23 +195,7 @@ def vertices_callback(msg):
 def laser_callback(msg):
     global check,mid_avg,data
     data=msg.ranges
-    
-    ###check in 3 directions for the free space
-    ###slice the ranges array into 3 regions for 3 directions:;left,forward and right
-    
-    #left_slice=np.asarray(data[667:720])
-    #left_avg=left_slice.sum()/len(left_slice)
-    
-    
-    #mid_slice=np.asarray(data[355:365])
-    #mid_avg=mid_slice.sum()/len(mid_slice)
-    
-    #right_slice=np.asarray(data[0:53])
-    #right_avg=right_slice.sum()/len(right_slice)
-    
-    #check=[left_avg,mid_avg,right_avg]
-    check=[data[719],data[360],data[0]]
-    #rospy.loginfo("Values i found are:"+str(check))    
+    check=[data[719],data[360],data[0]]    
     
 
 def check_for_vertex_in_array(v_x,v_y):
@@ -223,7 +206,6 @@ def check_for_vertex_in_array(v_x,v_y):
     distance=0.5  
     for v in vertex_array:
         err=sqrt((v_x-v.x)**2+(v_y-v.y)**2)
-        rospy.loginfo(err)
         if  err<distance:
             v_found=v
             flag=1
@@ -269,6 +251,29 @@ def main():
             if count>=2 or (count==0 and data[360]<lane_width/2):               ##NODE condition including end node
                 if count>=2:
                     forward_by_half_lane_width()
+                
+                
+                #I' initialization should be done first beacuse heading info will be lost after orienting to angle(pi/2)
+                I_dash=[] 
+                if previous_vertex.tag!='':
+                 rospy.loginfo("forming I' array") 
+                 if abs(heading-0)<err:
+                    I_dash.append(2*pi)
+                    I_dash.append(pi)
+                
+                 elif abs(heading-pi/2)<err:
+                    I_dash.append(pi/2)
+                    I_dash.append(3*pi/2)
+                
+                 elif abs(heading-pi)<err:
+                    I_dash.append(pi)
+                    I_dash.append(2*pi)
+                
+                 elif abs(heading+pi/2)<err:
+                    I_dash.append(3*pi/2)
+                    I_dash.append(pi/2)
+                 I_dash=np.array([I_dash]).transpose()
+                 
                 orient_to_heading(pi/2)
                 current_v=vertex_info()
                 current_v_I=[]
@@ -290,32 +295,16 @@ def main():
                 else:
                     rospy.loginfo("I'm at node :"+current_v.tag)
                
-                I_double_dash=I_R
-                I_dash=[]             
+                I_double_dash=I_R            
                 err=0.1
                 
                 #Finding I'
-                if previous_vertex.tag!='': 
-                 if abs(heading-0)<err:
-                    I_dash.append(2*pi)
-                    I_dash.append(pi)
-                
-                 elif abs(heading-pi/2)<err:
-                    I_dash.append(pi/2)
-                    I_dash.append(3*pi/2)
-                
-                 elif abs(heading-pi)<err:
-                    I_dash.append(pi)
-                    I_dash.append(2*pi)
-                
-                 elif abs(heading+pi/2)<err:
-                    I_dash.append(3*pi/2)
-                    I_dash.append(pi/2)
-                 vert_col_dash=np.array([previous_vertex,current_v])
-                 I_dash=np.array([I_dash])
+                if previous_vertex.tag!='':
+                 vert_col_dash=np.array([previous_vertex,current_v]).transpose()
                  I_dash=np.column_stack((vert_col_dash,I_dash))
-                
+                 rospy.loginfo("I':"+str(I_dash.shape))                  
                 ##FIRST STEP ON VERTEX VISIT##
+                 #rospy.loginfo(I_R)
                  [I_double_dash,Vcap,E1cap,E2cap]=op.merge_matrices(I_dash,I_R)
 
                 [I_R,Vcap,E1cap,E2cap]=op.merge_matrices(current_v_I,I_double_dash)
@@ -323,7 +312,7 @@ def main():
                 [Ec,I_R[:,1:I_R.shape[1]]]=op.Order_Matrix(I_R[:,1:I_R.shape[1]],E1cap,E2cap,Vcap)            
                 #rospy.loginfo("Ec:"+str(Ec))
                 #rospy.loginfo("First step results: I_R:"+str(I_R[:,1:I_R.shape[1]])+" E1cap:"+str(E1cap)+" E2cap"+str(E2cap)+" Vcap:"+str(Vcap))
-                rospy.loginfo(I_R)
+                #rospy.loginfo(I_R)
                 current_v_I=I_R
                 
                 #SECOND STEP ON VERTEX VISIT##
