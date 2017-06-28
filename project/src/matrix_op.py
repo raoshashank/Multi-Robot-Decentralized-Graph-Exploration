@@ -85,7 +85,7 @@ class matrix_op:
    def merge_matrices(self,I1,I2):
     #when I_R is empty ie; at start of exploration
     if I2.shape[1]==0:
-        return [I1,I1.shape[0],I1.shape[1],0]
+        return [I1,I1.shape[0],I1.shape[1]-1,0]
 
     vert_col_I1=I1[:,0]
     vert_col_I2=I2[:,0]

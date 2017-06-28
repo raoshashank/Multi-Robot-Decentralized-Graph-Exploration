@@ -37,22 +37,22 @@ def turn_to_next_vertex(current_v,next_v):
     elif next_v.y<current_v.y and abs(next_v.x-current_v.x)<err:
         return pi
 
-def edge_from_v(v1,v2):
+def edge_from_v(v_1,v_2,I_R):
     
-    for i in range(len(I_R.shape[0])):
-        if I_R[i,0].tag==v1.tag:
+    for i in range(I_R.shape[0]):
+        if I_R[i,0].tag==v_1.tag:
             break
     
-    for j in range(len(I_R.shape[0])):
-        if I_R[i,0].tag==v2.tag:
+    for j in range(I_R.shape[0]):
+        if I_R[j,0].tag==v_2.tag:
             break
     
-    for e in range(len(1,I_R.shape[1])):
+    for e in range(1,I_R.shape[1]):
         if I_R[i][e]!=0 and I_R[j][e]!=0:
             break
 
 
-    return e #index of edge
+    return e#index of edge
         
 
 
@@ -60,6 +60,7 @@ def edge_from_v(v1,v2):
 def second_step_on_vertex_visit():
      global traverse_q,E1cap,E2cap,Vcap,I_R,Ec
      global current_v,previous_vertex,next_vertex
+     ##If last edge is completed edge
      if op.non_zero_element_count(I_R[:,E1cap+E2cap])==2:
         rospy.loginfo("Exploration Complete!!")
         return
@@ -70,22 +71,23 @@ def second_step_on_vertex_visit():
             traverse_q=deque()    
             next_edge=I_R[:,E1cap+E2cap]
             turn_at_dest=0
-            ##identify index of known edge on next vertex for passing to dijkstra
-         
+            ##identify index of known vertex on next edge for passing to dijkstra
+            ###TARGET FOR DIJKSTRA
             for i in range(len(next_edge)):
                 if next_edge[i]!=0:
                     next_vertex=I_R[i][0]
-                    turn_at_dest=next_edge[i]
+                    turn_at_dest=np.absolute(next_edge[i])
                     break
       
-            #index of current edge for dijsktra
+            #index of current vertex for dijsktra
+            ##SOURCE FOR DIJKSTRA
             for j in range(len(I_R[:,0])):
                 if I_R[j,0].tag==current_v.tag:
                     break
 
-            adj=op.inci_to_adj(I_R)
+            adj=op.inci_to_adj(I_R[:,1:I_R.shape[1]])
             G=nx.from_numpy_matrix(adj,create_using=nx.DiGraph()) 
-            path=nx.dijkstra_path(G,i,j)
+            path=nx.dijkstra_path(G,j,i)
             ##Generated path has indices of vertices in adjacency matrix which same as in incidence matrix
             del path[0]       #First vertex is current vertex always in result  
             ret_path=[]
@@ -110,7 +112,7 @@ def second_step_on_vertex_visit():
      b=I[:,Ec+1:]
      b=shift(b)
      I=I[:,0:Ec+1]
-     I=np.column_stack((I,b))
+     I=np.column_stack((I,b))   
      previous_vertex=current_v
      ##If robot arrives at 1st vertex of new edge,next vertex=current vertex and traverse_q will be empty
      ##So next step is to extract the non zero element in the next_edge column and orient to that angle
@@ -218,7 +220,7 @@ def check_for_vertex_in_array(v_x,v_y):
         err=sqrt((v_x-v.x)**2+(v_y-v.y)**2)
         if  err<distance:
             v_found=v
-            flag=1
+            
     return v_found
 
 
@@ -317,16 +319,23 @@ def main():
                  #rospy.loginfo(I_R)
                  [I_double_dash,Vcap,E1cap,E2cap]=op.merge_matrices(I_dash,I_R)
 
+                rospy.loginfo(I_R[:,1:I_R.shape[1]]) 
                 [I_R,Vcap,E1cap,E2cap]=op.merge_matrices(current_v_I,I_double_dash)
+                rospy.loginfo(I_R[:,1:I_R.shape[1]]) 
                 #rospy.loginfo(I_R)
                 [Ec,I_R[:,1:I_R.shape[1]]]=op.Order_Matrix(I_R[:,1:I_R.shape[1]],E1cap,E2cap,Vcap)            
+                rospy.loginfo(I_R[:,1:I_R.shape[1]]) 
                 #rospy.loginfo("Ec:"+str(Ec))
                 #rospy.loginfo("First step results: I_R:"+str(I_R[:,1:I_R.shape[1]])+" E1cap:"+str(E1cap)+" E2cap"+str(E2cap)+" Vcap:"+str(Vcap))
                 #rospy.loginfo(I_R)
                 current_v_I=I_R
                 
                 #SECOND STEP ON VERTEX VISIT##
-                second_step_on_vertex_visit()   
+                rospy.loginfo("E1cap:"+str(E1cap)+"E2cap:"+str(E2cap)+"Vcap:"+str(Vcap))
+                try:
+                    second_step_on_vertex_visit()   
+                except IndexError:
+                    return
                 current_v_I=I_R   
                 rospy.loginfo("Second Step Done!")
                 rospy.loginfo(I_R)
