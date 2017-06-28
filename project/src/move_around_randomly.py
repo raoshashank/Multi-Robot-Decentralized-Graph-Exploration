@@ -12,7 +12,18 @@ from collections import deque
 import networkx as nx   
 import pickle
 
-
+def shift( matrix):
+        ''' shift given 2D matrix in-place the given number of rows or columns
+            in the specified (UP, DOWN, LEFT, RIGHT) direction and return it
+        '''
+        n =  -(1 % len(matrix[0]))
+        temp = zip(*matrix)
+        h = temp[:n]
+        del temp[:n]
+        temp.extend(h)
+        matrix[:] = map(list, zip(*temp))
+        return matrix
+   
 
 def turn_to_next_vertex(current_v,next_v):
     global odom_feedback,cmd,pub
@@ -96,10 +107,10 @@ def second_step_on_vertex_visit():
 
         
      #circular shifting   
-     b=I_R[:,Ec+1:E1cap+E2cap]
-     b=np.roll(b,-1*(b.shape[1]-1))
-     I_R=I_R[:,0:Ec+1]
-     I_R=np.column_stack((I_R,b))
+     b=I[:,Ec+1:]
+     b=shift(b)
+     I=I[:,0:Ec+1]
+     I=np.column_stack((I,b))
      previous_vertex=current_v
      ##If robot arrives at 1st vertex of new edge,next vertex=current vertex and traverse_q will be empty
      ##So next step is to extract the non zero element in the next_edge column and orient to that angle

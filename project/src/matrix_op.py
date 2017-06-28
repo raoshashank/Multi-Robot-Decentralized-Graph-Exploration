@@ -10,7 +10,7 @@ class matrix_op:
    def non_zero_element_count(self,I):
        count=0
        for i in I:
-           if i==0:
+           if i!=0:
                count+=1
        return count
 
@@ -106,20 +106,23 @@ class matrix_op:
     E1cap=E1
     E2cap=E2
     Vcap=V1+V2
-    
+
     delj=[]
     deli=[]
     I=np.row_stack((np.column_stack((I1,np.zeros((V1,E2)))),np.column_stack((np.zeros((V2,E1)),I2))))
+    
     vert_col=np.append(vert_col_I1,vert_col_I2)
+  
     for i1 in range(0,V1):
-     for j1 in range(0,E1):
-        for i2 in range(V1,V1+V2):
-          for j2 in range(E1,E1+E2): 
-            if vert_col[i1].tag==vert_col[i2].tag and np.absolute(I[i1,j1])==np.absolute(I[i2,j2]) :
-              if np.sign(I[i1,j1])!=np.sign(I[i2,j2]) :
+     for i2 in range(V1,V1+V2):     
+      if vert_col[i1].tag==vert_col[i2].tag  :      
+       for j1 in range(0,E1): 
+         for j2 in range(E1,E1+E2): 
+             if np.absolute(I[i1,j1])==np.absolute(I[i2,j2]):
+              if np.sign(I[i1,j1])!=np.sign(I[i2,j2]):
                   I[i2,j2]=-np.absolute(I[i1,j1])
                   I[i1,j1]=I[i2,j2]
-              if self.non_zero_element_count(I[V1:V1+V2,j2])==2 :
+              if self.non_zero_element_count(I[V1:,j2])==2:
                   delj.append(j1)
                   E1cap-=1
               else:
@@ -130,24 +133,24 @@ class matrix_op:
                       delj.append(j1)
                       E1cap-=1
                       
-              if self.non_zero_element_count (I[V1:V1+V2,j1])<2 :
-                  I[V1:V1+V2,j1]=I[V1:V1+V2,j1]+I[V1:V1+V2,j2]
+              if self.non_zero_element_count (I[V1:,j1])<2 :
+                  I[V1:,j1]=I[V1:,j1]+I[V1:,j2]
               
               if self.non_zero_element_count(I[0:V1,j2])<2:
                   I[0:V1,j2]=I[0:V1,j2]+I[0:V1,j1]
               
               deli.append(i1)
-
+  
     I=np.delete(I,(deli),axis=0)
     I=np.delete(I,(delj),axis=1)
     vert_col=np.delete(vert_col,(deli),axis=0)
     I=np.column_stack((vert_col.transpose(),I))
-    #last index with vertex column index is I[:,E1cap+E2cap]
-    return [I,Vcap,E1cap,E2cap]  
+    Vcap=I.shape[0]
+    return [I,Vcap,E1cap,E2cap] 
 
    def Order_Matrix(self,I_Merged,E1cap,E2cap,Vcap):
         I1=I_Merged[:,0:E1cap]
-        I2=I_Merged[:,E1cap:E1cap+E2cap-1]
+        I2=I_Merged[:,E1cap:E1cap+E2cap]
         I1_completed=self.completed(I1)
         I2_completed=self.completed(I2)
         I1_out=self.out(I1)
@@ -156,7 +159,7 @@ class matrix_op:
         I2_unexplored=self.unexplored(I2)
         I_ordered=np.column_stack((I1_completed,I2_completed,I1_out,I2_out,I1_unexplored,I2_unexplored)) 
         Ec=I1_completed.shape[1]+I2_completed.shape[1]
-        return [Ec,I_ordered]   
+        return [Ec,I_ordered]       
 
 
 
