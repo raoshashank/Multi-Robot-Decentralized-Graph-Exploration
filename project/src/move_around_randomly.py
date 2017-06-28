@@ -92,7 +92,7 @@ def second_step_on_vertex_visit():
             del path[0]       #First vertex is current vertex always in result  
             ret_path=[]
             for p in path:
-                ret_path.append(I[p,0])
+                ret_path.append(I_R[p,0])
         
             ##path containing vertex objects generated      
             ##TO Generate path containing edges to push into queue
@@ -109,10 +109,10 @@ def second_step_on_vertex_visit():
 
         
      #circular shifting   
-     b=I[:,Ec+1:]
+     b=I_R[:,Ec+1:]
      b=shift(b)
-     I=I[:,0:Ec+1]
-     I=np.column_stack((I,b))   
+     I_R=I_R[:,0:Ec+1]
+     I_R=np.column_stack((I_R,b))   
      previous_vertex=current_v
      ##If robot arrives at 1st vertex of new edge,next vertex=current vertex and traverse_q will be empty
      ##So next step is to extract the non zero element in the next_edge column and orient to that angle
@@ -242,7 +242,7 @@ def initialize_vertex_I():
         I.append(3*pi/2)
     orient_to_heading(pi/2)
     I=np.array([I])
-    rospy.loginfo(I)
+    #rospy.loginfo(I)
     return I
 
 
@@ -311,19 +311,32 @@ def main():
                 err=0.1
                 
                 #Finding I'
+                rospy.loginfo("previous_vertex:"+previous_vertex.tag)
                 if previous_vertex.tag!='':
-                 vert_col_dash=np.array([previous_vertex,current_v]).transpose()
-                 I_dash=np.column_stack((vert_col_dash,I_dash))
-                 rospy.loginfo("I':"+str(I_dash.shape))                  
-                ##FIRST STEP ON VERTEX VISIT##
-                 #rospy.loginfo(I_R)
-                 [I_double_dash,Vcap,E1cap,E2cap]=op.merge_matrices(I_dash,I_R)
+                    vert_col_dash=np.array([previous_vertex,current_v]).transpose()
+                    I_dash=np.column_stack((vert_col_dash,I_dash))
+                    rospy.loginfo("Before merging I' and I_R")
+                    rospy.loginfo("I':"+str(I_dash[:,1:I_dash.shape[1]]))                  
+                    rospy.loginfo("I_R:"+str(I_R[:,1:I_R.shape[1]]))                  
+                    ##FIRST STEP ON VERTEX VISIT##
+                    [I_double_dash,Vcap,E1cap,E2cap]=op.merge_matrices(I_dash,I_R)
+                    rospy.loginfo("After merging I' and I_R")
+                    rospy.loginfo(I_double_dash[:,1:I_double_dash.shape[1]])
+                    rospy.loginfo("E1cap:"+str(E1cap)+"E2cap:"+str(E2cap)+"Vcap:"+str(Vcap))
 
-                rospy.loginfo(I_R[:,1:I_R.shape[1]]) 
+                rospy.loginfo("Before merging I'' and vertex_I")
+                rospy.loginfo("I'':"+str(I_double_dash[:,1:I_double_dash.shape[1]]))                  
+                rospy.loginfo("vertex_I:"+str(current_v_I[:,1:current_v_I.shape[1]]))                   
                 [I_R,Vcap,E1cap,E2cap]=op.merge_matrices(current_v_I,I_double_dash)
+                rospy.loginfo("E1cap:"+str(E1cap)+"E2cap:"+str(E2cap)+"Vcap:"+str(Vcap)) 
+                rospy.loginfo("After merging I'' and vertex_I")
                 rospy.loginfo(I_R[:,1:I_R.shape[1]]) 
                 #rospy.loginfo(I_R)
-                [Ec,I_R[:,1:I_R.shape[1]]]=op.Order_Matrix(I_R[:,1:I_R.shape[1]],E1cap,E2cap,Vcap)            
+                try:
+                    [Ec,I_R[:,1:I_R.shape[1]]]=op.Order_Matrix(I_R[:,1:I_R.shape[1]],E1cap,E2cap,Vcap)
+                except ValueError:
+                    rospy.loginfo("FUNCTION OUTPUT:"+str(op.Order_Matrix(I_R[:,1:I_R.shape[1]],E1cap,E2cap,Vcap)))
+                rospy.loginfo("After Ordering I_R")
                 rospy.loginfo(I_R[:,1:I_R.shape[1]]) 
                 #rospy.loginfo("Ec:"+str(Ec))
                 #rospy.loginfo("First step results: I_R:"+str(I_R[:,1:I_R.shape[1]])+" E1cap:"+str(E1cap)+" E2cap"+str(E2cap)+" Vcap:"+str(Vcap))
@@ -337,8 +350,8 @@ def main():
                 except IndexError:
                     return
                 current_v_I=I_R   
-                rospy.loginfo("Second Step Done!")
-                rospy.loginfo(I_R)
+                rospy.loginfo("Second Step Done!I_R:")
+                rospy.loginfo(I_R[:,1:I_R.shape[1]])
 
                 #publish updated vertex info to /vertices topicx
                 for count,v in enumerate(vertex_array):
