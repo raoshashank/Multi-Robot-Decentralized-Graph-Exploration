@@ -16,42 +16,28 @@ class matrix_op:
 
 
    def out(self,matrix):
+    #only 1 -ve element and only 1 element
     out_edge=np.zeros((matrix.shape[0],0))
-    count=0    
     for i in range(matrix.shape[1]):
-        count=0
-        for j in range(matrix.shape[0]):
-            if matrix[j][i]<0:
-                count+=1
-        if count==1 and self.non_zero_element_count(matrix[:,i]):
-            out_edge=np.column_stack((out_edge,matrix[:,i]))
-
+            if self.non_zero_element_count(matrix[:,i])==1 and self.non_zero_element(matrix[:,i])<0:
+             out_edge=np.column_stack((out_edge,matrix[:,i]))
+ 
     return out_edge
     
    def completed(self,matrix):
     completed_edges=np.zeros((matrix.shape[0],0))
-    count=0    
     for i in range(matrix.shape[1]):
-        count=0
-        for j in range(matrix.shape[0]):
-            if matrix[j][i]!=0:
-                count+=1
-        if count==2:
-            completed_edges=np.column_stack((completed_edges,matrix[:,i]))
+            if self.non_zero_element_count(matrix[:,i])==2:
+             completed_edges=np.column_stack((completed_edges,matrix[:,i]))
     
     return completed_edges
     
     
    def unexplored(self,matrix):
     unexplored_edge=np.zeros((matrix.shape[0],0))
-    count=0    
     for i in range(matrix.shape[1]):
-        count=0
-        for j in range(matrix.shape[0]):
-            if matrix[j][i]>0:
-                count+=1
-        if count==1:
-            unexplored_edge=np.column_stack((unexplored_edge,matrix[:,i]))
+      if self.non_zero_element_count(matrix[:,i])==1 and self.non_zero_element(matrix[:,i])>0:
+             unexplored_edge=np.column_stack((unexplored_edge,matrix[:,i]))
     
     return unexplored_edge
 
@@ -155,13 +141,12 @@ class matrix_op:
         I1_completed=self.completed(I1)
         I2_completed=self.completed(I2)
         I1_out=self.out(I1)
-        I2_out=self.out(I2) 
+        I2_out=self.out(I2)
         I1_unexplored=self.unexplored(I1)
         I2_unexplored=self.unexplored(I2)
         I_ordered=np.column_stack((I1_completed,I2_completed,I1_out,I2_out,I1_unexplored,I2_unexplored)) 
         Ec=I1_completed.shape[1]+I2_completed.shape[1]
-        return [Ec,I_ordered]       
-
+        return [Ec,I_ordered]        
 
 
 

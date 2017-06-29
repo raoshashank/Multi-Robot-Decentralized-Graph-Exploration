@@ -53,8 +53,8 @@ def edge_from_v(v_1,v_2,I_R):
     return e
 
 
-def second_step_on_vertex_visit(I_R):
-     global traverse_q,E1cap,E2cap,Vcap,Ec
+def second_step_on_vertex_visit():
+     global traverse_q,E1cap,E2cap,Vcap,Ec,I_R
      global current_v,previous_vertex,next_vertex
      
      if op.non_zero_element_count(I_R[:,E1cap+E2cap])==2:
@@ -66,26 +66,27 @@ def second_step_on_vertex_visit(I_R):
          #1.Search for the edge correspoinding to last entry in traverse queue
          #  a. find edges with known vertex of unknown edge
          #  b. match absolute value of the non-zero entry in the edge in traverse que with the one in the I_R array
-         last_edge=traverse_q[len[traverse_q]-1]
-         # i will be index of non-zero element in last_edge
-         for i in range(len(last_edge[:,0])):
-             if last_edge[i,1]!=0:
-                break
-         #v_in_e will be vertex corresponding to non-zero value in last_edge   
-         v_in_e=last_edge[i,0]               
-         #index_of_v_in_I_R will be index of this vertex in I_R matrix
-         index_of_v_in_I_R=[x for x in range(len(I_R[x,0])) if I_R[x,0].tag==v_in_e.tag]
-         
-         #now to match absolute values to find the edge in I_R
-         for j in range(1,len(I_R.shape[1])):
-             if np.absolute(I_R[index_of_v_in_I_R,j])==np.absolute(last_edge[i,1]):
-                 break
+         #Second of if condition in next block can only checked if traverse_q is not empty
+         if len(traverse_q)>=1:   
+            last_edge=traverse_q[len(traverse_q)-1]
+             # i will be index of non-zero element in last_edge
+            for i in range(len(last_edge[:,0])):
+                 if last_edge[i,1]!=0:
+                    break
+            #v_in_e will be vertex corresponding to non-zero value in last_edge   
+            v_in_e=last_edge[i,0]               
+            #index_of_v_in_I_R will be index of this vertex in I_R matrix
+            index_of_v_in_I_R=[x for x in range(len(I_R[x,0])) if I_R[x,0].tag==v_in_e.tag]
+            #now to match absolute values to find the edge in I_R
+            for j in range(1,len(I_R.shape[1])):
+                 if np.absolute(I_R[index_of_v_in_I_R,j])==np.absolute(last_edge[i,1]):
+                    break
 
-         last_edge_of_q_in_I_R=I_R[:,j]                          
-         #so edge last edge in traverse_q in I_R will be I_R[:,j]
-         #########################################################################       
-         #len(traverse_q)==0 means that bot has finished traversing the selected edge
-         #last entry of queue being completed means that another bot has completed it before this bot
+            last_edge_of_q_in_I_R=I_R[:,j]                          
+            #so edge last edge in traverse_q in I_R will be I_R[:,j]
+            #########################################################################       
+            #len(traverse_q)==0 means that bot has finished traversing the selected edge
+            #last entry of queue being completed means that another bot has completed it before this bot
          if len(traverse_q)==0 or op.non_zero_element_count(last_edge_of_q_in_I_R)==2:      
                 
             next_edge=I_R[:,E1cap+E2cap]
@@ -365,10 +366,7 @@ def main():
                 
                 #SECOND STEP ON VERTEX VISIT##
                 rospy.loginfo("E1cap:"+str(E1cap)+"E2cap:"+str(E2cap)+"Vcap:"+str(Vcap))
-                try:
-                    second_step_on_vertex_visit()   
-                except IndexError:
-                    return
+                second_step_on_vertex_visit()   
                 current_v_I=I_R   
                 forward_by_half_lane_width()  
                 rospy.loginfo("Second Step Done!I_R:")
@@ -403,7 +401,7 @@ if  __name__ == "__main__":
     heading=0.0  
     check=[]
     interval_for_angle_measurement=10
-    linear_velocity_x=0.1
+    linear_velocity_x=0.15
     angular_velocity_z=0
     
     rate=rospy.Rate(5)
