@@ -38,94 +38,114 @@ def turn_to_next_vertex(current_v,next_v):
         return pi
 
 def edge_from_v(v_1,v_2,I_R):
-    
     for i in range(I_R.shape[0]):
-        if I_R[i,0].tag==v_1.tag:
-            break
-    
+     if I_R[i,0].tag==v_1.tag:
+       break
     for j in range(I_R.shape[0]):
-        if I_R[j,0].tag==v_2.tag:
-            break
+     if I_R[j,0].tag==v_2.tag:
+       break
     
     for e in range(1,I_R.shape[1]):
-        if I_R[i][e]!=0 and I_R[j][e]!=0:
-            break
+     if I_R[i][e]!=0 and I_R[j][e]!=0:
+       break
+
+    #index of edge
+    return e
 
 
-    return e#index of edge
-        
-
-
-
-def second_step_on_vertex_visit():
-     global traverse_q,E1cap,E2cap,Vcap,I_R,Ec
+def second_step_on_vertex_visit(I_R):
+     global traverse_q,E1cap,E2cap,Vcap,Ec
      global current_v,previous_vertex,next_vertex
-     ##If last edge is completed edge
+     
      if op.non_zero_element_count(I_R[:,E1cap+E2cap])==2:
-        rospy.loginfo("Exploration Complete!!")
         return
         
      else:
-            
-         if len(traverse_q)==0 or op.non_zero_element_count(traverse_q[len(traverse_q-1)])==2:
-            traverse_q=deque()    
+         ##########################################################################
+         ###Queue is not updated till it reaches the selected edge So the last edge of the Queue has to checked in I_R if it is completed or not! as mentioned in the paper
+         #1.Search for the edge correspoinding to last entry in traverse queue
+         #  a. find edges with known vertex of unknown edge
+         #  b. match absolute value of the non-zero entry in the edge in traverse que with the one in the I_R array
+         last_edge=traverse_q[len[traverse_q]-1]
+         # i will be index of non-zero element in last_edge
+         for i in range(len(last_edge[:,0])):
+             if last_edge[i,1]!=0:
+                break
+         #v_in_e will be vertex corresponding to non-zero value in last_edge   
+         v_in_e=last_edge[i,0]               
+         #index_of_v_in_I_R will be index of this vertex in I_R matrix
+         index_of_v_in_I_R=[x for x in range(len(I_R[x,0])) if I_R[x,0].tag==v_in_e.tag]
+         
+         #now to match absolute values to find the edge in I_R
+         for j in range(1,len(I_R.shape[1])):
+             if np.absolute(I_R[index_of_v_in_I_R,j])==np.absolute(last_edge[i,1]):
+                 break
+
+         last_edge_of_q_in_I_R=I_R[:,j]                          
+         #so edge last edge in traverse_q in I_R will be I_R[:,j]
+         #########################################################################       
+         #len(traverse_q)==0 means that bot has finished traversing the selected edge
+         #last entry of queue being completed means that another bot has completed it before this bot
+         if len(traverse_q)==0 or op.non_zero_element_count(last_edge_of_q_in_I_R)==2:      
+                
             next_edge=I_R[:,E1cap+E2cap]
             turn_at_dest=0
-            ##identify index of known vertex on next edge for passing to dijkstra
-            ###TARGET FOR DIJKSTRA
-            for i in range(len(next_edge)):
-                if next_edge[i]!=0:
-                    next_vertex=I_R[i][0]
-                    turn_at_dest=np.absolute(next_edge[i])
-                    break
-      
-            #index of current vertex for dijsktra
-            ##SOURCE FOR DIJKSTRA
+            #index of current edge for dijsktra
             for j in range(len(I_R[:,0])):
                 if I_R[j,0].tag==current_v.tag:
                     break
 
+            ##identify index of known edge on next vertex for passing to dijkstra
+            for i in range(len(next_edge)):
+                if next_edge[i]!=0:
+                    turn_at_dest=np.absolute(next_edge[i])
+                    break
+            
+            
+            traverse_q=deque()
             adj=op.inci_to_adj(I_R[:,1:I_R.shape[1]])
             G=nx.from_numpy_matrix(adj,create_using=nx.DiGraph()) 
-            path=nx.dijkstra_path(G,j,i)
+            path=nx.dijkstra_path(G,i,j)
             ##Generated path has indices of vertices in adjacency matrix which same as in incidence matrix
             del path[0]       #First vertex is current vertex always in result  
-            ret_path=[]
+            ret_path=[] 
             for p in path:
                 ret_path.append(I_R[p,0])
-        
+            ret_path=deque(ret_path)
             ##path containing vertex objects generated      
             ##TO Generate path containing edges to push into queue
+            vert_col=I_R[:,0].transpose()
             for i in range(len(ret_path)-1):
                 #find edge with ret_path[i] and ret_path[i+1]
-                    e=edge_from_v(ret_path[i],ret_path[i+1])
-                    traverse_q.append(I_R[:,e])
-
-            #rospy.loginfo(traverse_q)
-            
-            ##Queue updated
+                e=edge_from_v(ret_path[i],ret_path[i+1])
+                traverse_q.append(np.column_stack((vert_col,I_R[:,e])))
+     traverse_q.append(next_edge)
+     ##Queue updated]
+     #############################################################################
+     #Assign Next Edge for traversal as first entry of Q            
+     next_edge=traverse_q.popleft()
+     try:
+         next_vertex=ret_path.popleft() ##Immediate next vertex to reach
+     except IndexError:
+         rospy.loginfo("ret_path is empty;arrived at destination vertex")
+     ############################################################################
      if op.non_zero_element(I_R[:,E1cap+E2cap])>0:
             I_R[:,E1cap+E2cap]=-I_R[:,E1cap+E2cap]
-
-        
+     ###########################################################################
      #circular shifting   
      b=I_R[:,Ec+1:]
      b=shift(b)
      I_R=I_R[:,0:Ec+1]
      I_R=np.column_stack((I_R,b))   
      previous_vertex=current_v
-     ##If robot arrives at 1st vertex of new edge,next vertex=current vertex and traverse_q will be empty
+     ##########################################################################
+     ##If robot arrives at 1st vertex of new edge,the next edge will have one non_zero element
      ##So next step is to extract the non zero element in the next_edge column and orient to that angle
-     if len(traverse_q)==0:
-        rospy.loginfo("Traversing new edge at angle:"+str(turn_at_dest))
-        orient_to_heading(abs(turn_at_dest))
-
-     else:
-        next_vertex=traverse_q[0]
-        turn_to_next_vertex(current_v,next_vertex)
-        rospy.loginfo("Entering new edge:")
-     forward_by_half_lane_width()   
-            
+     if op.non_zero_element_count(next_edge)==1:
+        print "Traversing new edge at angle:"+str(turn_at_dest)
+        orient_to_heading(turn_at_dest) 
+     ########################################################################        
+                   
         
 def orient_to_heading(dir):
 
@@ -350,6 +370,7 @@ def main():
                 except IndexError:
                     return
                 current_v_I=I_R   
+                forward_by_half_lane_width()  
                 rospy.loginfo("Second Step Done!I_R:")
                 rospy.loginfo(I_R[:,1:I_R.shape[1]])
 
