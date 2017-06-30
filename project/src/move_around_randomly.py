@@ -29,13 +29,13 @@ def turn_to_next_vertex(current_v,next_v):
     global odom_feedback,cmd,pub
     err=0.2
     if   next_v.x>current_v.x and abs(next_v.y-current_v.y)<err:
-        return -pi/2
-    elif next_v.x<current_v.x and abs(next_v.y-current_v.y)<err:
-        return pi/2
-    elif next_v.y>current_v.y and abs(next_v.x-current_v.x)<err:
         return 0
-    elif next_v.y<current_v.y and abs(next_v.x-current_v.x)<err:
+    elif next_v.x<current_v.x and abs(next_v.y-current_v.y)<err:
         return pi
+    elif next_v.y>current_v.y and abs(next_v.x-current_v.x)<err:
+        return pi/2
+    elif next_v.y<current_v.y and abs(next_v.x-current_v.x)<err:
+        return 3*pi/2
 
 def edge_from_v(v_1,v_2,I_R):
     for i in range(I_R.shape[0]):
@@ -58,6 +58,7 @@ def second_step_on_vertex_visit():
      global current_v,previous_vertex,next_vertex
      
      if op.non_zero_element_count(I_R[:,E1cap+E2cap])==2:
+        rospy.loginfo("Exploration Complete")
         return
         
      else:
@@ -68,6 +69,7 @@ def second_step_on_vertex_visit():
          #  b. match absolute value of the non-zero entry in the edge in traverse que with the one in the I_R array
          #Second of if condition in next block can only checked if traverse_q is not empty
          if len(traverse_q)>=1:   
+            rospy.loginfo("Traverse que is not empty!")
             last_edge=traverse_q[len(traverse_q)-1]
              # i will be index of non-zero element in last_edge
             for i in range(len(last_edge[:,0])):
@@ -88,31 +90,33 @@ def second_step_on_vertex_visit():
             #len(traverse_q)==0 means that bot has finished traversing the selected edge
             #last entry of queue being completed means that another bot has completed it before this bot
          if len(traverse_q)==0 or op.non_zero_element_count(last_edge_of_q_in_I_R)==2:      
-                
             next_edge=I_R[:,E1cap+E2cap]
             turn_at_dest=0
             #index of current edge for dijsktra
-            for j in range(len(I_R[:,0])):
-                if I_R[j,0].tag==current_v.tag:
+            for source in range(len(I_R[:,0])):
+                if I_R[source,0].tag==current_v.tag:
                     break
 
             ##identify index of known edge on next vertex for passing to dijkstra
-            for i in range(len(next_edge)):
-                if next_edge[i]!=0:
-                    turn_at_dest=np.absolute(next_edge[i])
+            for target in range(len(next_edge)):
+                if next_edge[target]!=0:
+                    turn_at_dest=np.absolute(next_edge[target])
                     break
-            
-            
+
             traverse_q=deque()
             adj=op.inci_to_adj(I_R[:,1:I_R.shape[1]])
+            rospy.loginfo("Adjacency:"+str(adj))
             G=nx.from_numpy_matrix(adj,create_using=nx.DiGraph()) 
-            path=nx.dijkstra_path(G,i,j)
+            path=nx.dijkstra_path(G,source,target)
             ##Generated path has indices of vertices in adjacency matrix which same as in incidence matrix
             del path[0]       #First vertex is current vertex always in result  
+            rospy.loginfo("path of indexes:"+str(path))
             ret_path=[] 
             for p in path:
                 ret_path.append(I_R[p,0])
             ret_path=deque(ret_path)
+            for i in ret_path:
+                rospy.loginfo("Que of vertices:"+str([v.tag for v in ret_path]))
             ##path containing vertex objects generated      
             ##TO Generate path containing edges to push into queue
             vert_col=I_R[:,0].transpose()
@@ -120,18 +124,27 @@ def second_step_on_vertex_visit():
                 #find edge with ret_path[i] and ret_path[i+1]
                 e=edge_from_v(ret_path[i],ret_path[i+1])
                 traverse_q.append(np.column_stack((vert_col,I_R[:,e])))
-     traverse_q.append(next_edge)
+            
+     traverse_q.append(np.column_stack((vert_col,next_edge)))
+     #rospy.loginfo("Traverse Que with new Edge:"+str(traverse_q))
      ##Queue updated]
      #############################################################################
      #Assign Next Edge for traversal as first entry of Q            
      next_edge=traverse_q.popleft()
+     #rospy.loginfo("Next Edge:"+str(next_edge))
      try:
          next_vertex=ret_path.popleft() ##Immediate next vertex to reach
+         rospy.loginfo("current vertex:"+current_v.tag)
+         rospy.loginfo("next vertex:"+next_vertex.tag)
+         orient_to_heading(turn_to_next_vertex(current_v,next_vertex))
+         rospy.loginfo("Turned towards next vertex")
      except IndexError:
          rospy.loginfo("ret_path is empty;arrived at destination vertex")
+         orient_to_heading(turn_at_dest)     
      ############################################################################
      if op.non_zero_element(I_R[:,E1cap+E2cap])>0:
             I_R[:,E1cap+E2cap]=-I_R[:,E1cap+E2cap]
+            rospy.loginfo("Making non-zero-element -ve")
      ###########################################################################
      #circular shifting   
      b=I_R[:,Ec+1:]
@@ -139,12 +152,13 @@ def second_step_on_vertex_visit():
      I_R=I_R[:,0:Ec+1]
      I_R=np.column_stack((I_R,b))   
      previous_vertex=current_v
+     rospy.loginfo("Made Current Vertex as previous vertex")
      ##########################################################################
      ##If robot arrives at 1st vertex of new edge,the next edge will have one non_zero element
      ##So next step is to extract the non zero element in the next_edge column and orient to that angle
-     if op.non_zero_element_count(next_edge)==1:
-        print "Traversing new edge at angle:"+str(turn_at_dest)
-        orient_to_heading(turn_at_dest) 
+     #if op.non_zero_element_count(next_edge[:,1])==1:
+     #   print "Traversing new edge at angle:"+str(turn_at_dest)
+        
      ########################################################################        
                    
         
@@ -285,7 +299,7 @@ def main():
                 if count>=2:
                     forward_by_half_lane_width()
                 
-                
+                rospy.loginfo("######################################################")
                 #I' initialization should be done first beacuse heading info will be lost after orienting to angle(pi/2)
                 I_dash=[] 
                 if previous_vertex.tag!='':
@@ -327,6 +341,7 @@ def main():
 
                 else:
                     rospy.loginfo("I'm at node :"+current_v.tag)
+                    current_v_I=pickle.loads(current_v.I)
                
                 I_double_dash=I_R            
                 err=0.1
@@ -336,29 +351,33 @@ def main():
                 if previous_vertex.tag!='':
                     vert_col_dash=np.array([previous_vertex,current_v]).transpose()
                     I_dash=np.column_stack((vert_col_dash,I_dash))
-                    rospy.loginfo("Before merging I' and I_R")
-                    rospy.loginfo("I':"+str(I_dash[:,1:I_dash.shape[1]]))                  
-                    rospy.loginfo("I_R:"+str(I_R[:,1:I_R.shape[1]]))                  
+                    rospy.logdebug("Before merging I' and I_R")
+                    rospy.logdebug("I':")
+                    rospy.logdebug(I_dash[:,1:I_dash.shape[1]])
+                    rospy.logdebug("I_R:")
+                    rospy.logdebug(I_R[:,1:I_R.shape[1]])                
                     ##FIRST STEP ON VERTEX VISIT##
+                    
                     [I_double_dash,Vcap,E1cap,E2cap]=op.merge_matrices(I_dash,I_R)
-                    rospy.loginfo("After merging I' and I_R")
-                    rospy.loginfo(I_double_dash[:,1:I_double_dash.shape[1]])
-                    rospy.loginfo("E1cap:"+str(E1cap)+"E2cap:"+str(E2cap)+"Vcap:"+str(Vcap))
+                    rospy.logdebug("After merging I' and I_R")
+                    rospy.logdebug(I_double_dash[:,1:I_double_dash.shape[1]])
+                    rospy.logdebug("E1cap:"+str(E1cap)+"E2cap:"+str(E2cap)+"Vcap:"+str(Vcap))
 
-                rospy.loginfo("Before merging I'' and vertex_I")
-                rospy.loginfo("I'':"+str(I_double_dash[:,1:I_double_dash.shape[1]]))                  
-                rospy.loginfo("vertex_I:"+str(current_v_I[:,1:current_v_I.shape[1]]))                   
-                [I_R,Vcap,E1cap,E2cap]=op.merge_matrices(current_v_I,I_double_dash)
-                rospy.loginfo("E1cap:"+str(E1cap)+"E2cap:"+str(E2cap)+"Vcap:"+str(Vcap)) 
-                rospy.loginfo("After merging I'' and vertex_I")
-                rospy.loginfo(I_R[:,1:I_R.shape[1]]) 
+                rospy.logdebug("Before merging I'' and vertex_I")
+                rospy.logdebug("I'':")
+                rospy.logdebug(I_double_dash[:,1:I_double_dash.shape[1]])                
+                rospy.logdebug("vertex_I:")
+                rospy.logdebug(current_v_I[:,1:current_v_I.shape[1]])
+                
+                [I_R,Vcap,E1cap,E2cap]=op.merge_matrices(I_double_dash,current_v_I)
+                
+                rospy.logdebug("E1cap:"+str(E1cap)+"E2cap:"+str(E2cap)+"Vcap:"+str(Vcap)) 
+                rospy.logdebug("After merging I'' and vertex_I")
+                rospy.logdebug(I_R[:,1:I_R.shape[1]]) 
                 #rospy.loginfo(I_R)
-                try:
-                    [Ec,I_R[:,1:I_R.shape[1]]]=op.Order_Matrix(I_R[:,1:I_R.shape[1]],E1cap,E2cap,Vcap)
-                except ValueError:
-                    rospy.loginfo("FUNCTION OUTPUT:"+str(op.Order_Matrix(I_R[:,1:I_R.shape[1]],E1cap,E2cap,Vcap)))
-                rospy.loginfo("After Ordering I_R")
-                rospy.loginfo(I_R[:,1:I_R.shape[1]]) 
+                [Ec,I_R[:,1:I_R.shape[1]]]=op.Order_Matrix(I_R[:,1:I_R.shape[1]],E1cap,E2cap,Vcap)
+                rospy.logdebug("After Ordering I_R")
+                rospy.logdebug(I_R[:,1:I_R.shape[1]]) 
                 #rospy.loginfo("Ec:"+str(Ec))
                 #rospy.loginfo("First step results: I_R:"+str(I_R[:,1:I_R.shape[1]])+" E1cap:"+str(E1cap)+" E2cap"+str(E2cap)+" Vcap:"+str(Vcap))
                 #rospy.loginfo(I_R)
@@ -367,19 +386,18 @@ def main():
                 #SECOND STEP ON VERTEX VISIT##
                 rospy.loginfo("E1cap:"+str(E1cap)+"E2cap:"+str(E2cap)+"Vcap:"+str(Vcap))
                 second_step_on_vertex_visit()   
+                rospy.logdebug("Second Step Done!I_R:")
+                rospy.logdebug(I_R[:,1:I_R.shape[1]])
                 current_v_I=I_R   
                 forward_by_half_lane_width()  
-                rospy.loginfo("Second Step Done!I_R:")
-                rospy.loginfo(I_R[:,1:I_R.shape[1]])
-
                 #publish updated vertex info to /vertices topicx
                 for count,v in enumerate(vertex_array):
-                    if current_v.tag==v.x.tag:
+                    if current_v.tag==v.tag:
                         del vertex_array[count]
                 current_v.I=pickle.dumps(current_v_I)
                 vertex_array.append(current_v)        
                 pub_vertices.publish(vertex_array)    
-                rospy.loginfo("updated vertex_array")         
+                rospy.loginfo("updated vertex_array with vertex:"+current_v.tag )         
             
             else:
                 go_forward()
@@ -436,8 +454,9 @@ if  __name__ == "__main__":
     sub=rospy.Subscriber('/bot_0/laser/scan',LaserScan,laser_callback)
     
     sub_vertex=rospy.Subscriber('/vertices',vertices,vertices_callback)
-    pub_vertices=rospy.Publisher('/vertices',vertices,queue_size=1)
+    pub_vertices=rospy.Publisher('/vertices',vertices,queue_size=1,latch=True)
     rate.sleep()
+    pub_vertices.publish(vertices())
     rate.sleep()
     main()
     rospy.spin()

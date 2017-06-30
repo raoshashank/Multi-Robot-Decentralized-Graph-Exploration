@@ -6,29 +6,20 @@ from matrix_op import matrix_op
 import numpy as np
 import pickle
 
-def callback(msg):
-  global message,pub,rate
-  message=msg
-  main()
+#def callback(msg):
+#    rospy.loginfo(len(msg.v))
 
   
 
 rospy.init_node('vertex_publisher')
 
-def main():
-  global message
-  while not rospy.is_shutdown():
-    rate.sleep()
-    pub.publish(message)
-
-
 if __name__=='__main__': 
   rate=rospy.Rate(20)
-  pub=rospy.Publisher('/vertices',vertices,queue_size=10)
-  sub=rospy.Subscriber('/vertices',vertices,callback)
-  message=vertices()
-  main()
-  rospy.spin()   
+  pub=rospy.Publisher( '/vertices',vertices,latch=True,queue_size=10)
+ # sub=rospy.Subscriber('/vertices',vertices,callback)
+  rospy.loginfo("log info")
+  rospy.logdebug("log debug ")
+ # rospy.spin()   
 
 
 

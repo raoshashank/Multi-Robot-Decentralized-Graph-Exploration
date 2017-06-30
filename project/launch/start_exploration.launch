@@ -1,5 +1,3 @@
 <launch>
-<node pkg='project' type='vertex_publisher.py' name='vertex_publisher' output='screen'></node>
-
 <node pkg='project' type='move_around_randomly.py' name='random_mover' output='screen'></node>
 </launch>

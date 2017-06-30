@@ -70,8 +70,8 @@ class matrix_op:
    
    def merge_matrices(self,I1,I2):
     #when I_R is empty ie; at start of exploration
-    if I2.shape[1]==0:
-        return [I1,I1.shape[0],I1.shape[1]-1,0]
+    if I1.shape[1]==0:
+        return [I2,I2.shape[0],I2.shape[1]-1,0]
 
     vert_col_I1=I1[:,0]
     vert_col_I2=I2[:,0]
@@ -102,7 +102,7 @@ class matrix_op:
     for i1 in range(0,V1):
      for i2 in range(V1,V1+V2):     
       if vert_col[i1].tag==vert_col[i2].tag  :     
-       rospy.loginfo("Found duplicate vertex") 
+       rospy.loginfo("Found duplicate vertex:"+str(vert_col[i1].tag)) 
        for j1 in range(0,E1): 
          for j2 in range(E1,E1+E2): 
              if np.absolute(I[i1,j1])==np.absolute(I[i2,j2]):
@@ -128,6 +128,7 @@ class matrix_op:
               
               deli.append(i1)
   
+    rospy.loginfo("delj"+str(delj))
     I=np.delete(I,(deli),axis=0)
     I=np.delete(I,(delj),axis=1)
     vert_col=np.delete(vert_col,(deli),axis=0)
