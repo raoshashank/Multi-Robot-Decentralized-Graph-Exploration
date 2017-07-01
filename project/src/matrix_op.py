@@ -106,34 +106,38 @@ class matrix_op:
        for j1 in range(0,E1): 
          for j2 in range(E1,E1+E2): 
              if np.absolute(I[i1,j1])==np.absolute(I[i2,j2]):
-              if np.sign(I[i1,j1])!=np.sign(I[i2,j2]):
-                  I[i2,j2]=-np.absolute(I[i1,j1])
-                  I[i1,j1]=I[i2,j2]
-              if self.non_zero_element_count(I[V1:,j2])==2:
-                  delj.append(j1)
-                  E1cap-=1
-              else:
-                  if self.non_zero_element_count(I[0:V1,j1])==2:
-                      delj.append(j2)
-                      E2cap-=1
-                  else:
-                      delj.append(j1)
-                      E1cap-=1
-                      
-              if self.non_zero_element_count (I[V1:,j1])<2 :
-                  I[V1:,j1]=I[V1:,j1]+I[V1:,j2]
+                    if np.sign(I[i1,j1])!=np.sign(I[i2,j2]):
+                        I[i2,j2]=-np.absolute(I[i1,j1])
+                        I[i1,j1]=I[i2,j2]
+                    if self.non_zero_element_count(I[V1:,j2])==2:
+                        delj.append(j1)
+                        E1cap-=1
+                    else:
+                        if self.non_zero_element_count(I[0:V1,j1])==2:
+                            delj.append(j2)
+                            E2cap-=1
+                        else:
+                            delj.append(j1)
+                            E1cap-=1
+                            
+                    if self.non_zero_element_count(I[V1:,j1])<2 :
+                        I[V1:,j1]=I[V1:,j1]+I[V1:,j2]
               
-              if self.non_zero_element_count(I[0:V1,j2])<2:
-                  I[0:V1,j2]=I[0:V1,j2]+I[0:V1,j1]
+                    if self.non_zero_element_count(I[0:V1,j2])<2:
+                        I[0:V1,j2]=I[0:V1,j2]+I[0:V1,j1]
               
-              deli.append(i1)
-  
+                    deli.append(i1)
+                    
     rospy.loginfo("delj"+str(delj))
     I=np.delete(I,(deli),axis=0)
     I=np.delete(I,(delj),axis=1)
     vert_col=np.delete(vert_col,(deli),axis=0)
     I=np.column_stack((vert_col.transpose(),I))
     Vcap=I.shape[0]
+    if E1cap<0:
+        E1cap=0
+    if E2cap<0:
+        E2cap=0
     return [I,Vcap,E1cap,E2cap] 
 
    def Order_Matrix(self,I_Merged,E1cap,E2cap,Vcap):

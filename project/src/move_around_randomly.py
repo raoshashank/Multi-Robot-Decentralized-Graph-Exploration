@@ -124,14 +124,14 @@ def second_step_on_vertex_visit():
                 #find edge with ret_path[i] and ret_path[i+1]
                 e=edge_from_v(ret_path[i],ret_path[i+1])
                 traverse_q.append(np.column_stack((vert_col,I_R[:,e])))
-            
-     traverse_q.append(np.column_stack((vert_col,next_edge)))
+            traverse_q.append(np.column_stack((vert_col,next_edge)))
      #rospy.loginfo("Traverse Que with new Edge:"+str(traverse_q))
      ##Queue updated]
      #############################################################################
      #Assign Next Edge for traversal as first entry of Q            
+
      next_edge=traverse_q.popleft()
-     #rospy.loginfo("Next Edge:"+str(next_edge))
+  
      try:
          next_vertex=ret_path.popleft() ##Immediate next vertex to reach
          rospy.loginfo("current vertex:"+current_v.tag)
@@ -142,6 +142,7 @@ def second_step_on_vertex_visit():
          rospy.loginfo("ret_path is empty;arrived at destination vertex")
          orient_to_heading(turn_at_dest)     
      ############################################################################
+     
      if op.non_zero_element(I_R[:,E1cap+E2cap])>0:
             I_R[:,E1cap+E2cap]=-I_R[:,E1cap+E2cap]
             rospy.loginfo("Making non-zero-element -ve")
@@ -351,44 +352,65 @@ def main():
                 if previous_vertex.tag!='':
                     vert_col_dash=np.array([previous_vertex,current_v]).transpose()
                     I_dash=np.column_stack((vert_col_dash,I_dash))
-                    rospy.logdebug("Before merging I' and I_R")
-                    rospy.logdebug("I':")
-                    rospy.logdebug(I_dash[:,1:I_dash.shape[1]])
-                    rospy.logdebug("I_R:")
-                    rospy.logdebug(I_R[:,1:I_R.shape[1]])                
+                    rospy.loginfo("Before merging I' and I_R")
+                    rospy.loginfo("I':") 
+                    rospy.loginfo(I_dash[:,1:I_dash.shape[1]])
+                    rospy.loginfo("I_R:")
+                    rospy.loginfo(I_R[:,1:I_R.shape[1]])                
                     ##FIRST STEP ON VERTEX VISIT##
-                    
-                    [I_double_dash,Vcap,E1cap,E2cap]=op.merge_matrices(I_dash,I_R)
-                    rospy.logdebug("After merging I' and I_R")
-                    rospy.logdebug(I_double_dash[:,1:I_double_dash.shape[1]])
-                    rospy.logdebug("E1cap:"+str(E1cap)+"E2cap:"+str(E2cap)+"Vcap:"+str(Vcap))
 
-                rospy.logdebug("Before merging I'' and vertex_I")
-                rospy.logdebug("I'':")
-                rospy.logdebug(I_double_dash[:,1:I_double_dash.shape[1]])                
-                rospy.logdebug("vertex_I:")
-                rospy.logdebug(current_v_I[:,1:current_v_I.shape[1]])
-                
+                    ##############################################################
+                    [I_double_dash,Vcap,E1cap,E2cap]=op.merge_matrices(I_dash,I_R)
+                    ##############################################################                                   
+               
+                    rospy.loginfo("After merging I' and I_R")
+                    rospy.loginfo(I_double_dash[:,1:I_double_dash.shape[1]])
+                    rospy.loginfo("E1cap:"+str(E1cap)+"E2cap:"+str(E2cap)+"Vcap:"+str(Vcap))
+
+                rospy.loginfo("Before merging I'' and vertex_I")
+                rospy.loginfo("I'':")
+                rospy.loginfo(I_double_dash[:,1:I_double_dash.shape[1]])                
+                rospy.loginfo("vertex_I:")
+                rospy.loginfo(current_v_I[:,1:current_v_I.shape[1]])
+
+                ###################################################################
                 [I_R,Vcap,E1cap,E2cap]=op.merge_matrices(I_double_dash,current_v_I)
-                
-                rospy.logdebug("E1cap:"+str(E1cap)+"E2cap:"+str(E2cap)+"Vcap:"+str(Vcap)) 
-                rospy.logdebug("After merging I'' and vertex_I")
-                rospy.logdebug(I_R[:,1:I_R.shape[1]]) 
+                ###################################################################
+
+                rospy.loginfo("E1cap:"+str(E1cap)+"E2cap:"+str(E2cap)+"Vcap:"+str(Vcap)) 
+                rospy.loginfo("After merging I'' and vertex_I")
+                rospy.loginfo(I_R[:,1:I_R.shape[1]]) 
                 #rospy.loginfo(I_R)
+               
+                ##################################################################################
                 [Ec,I_R[:,1:I_R.shape[1]]]=op.Order_Matrix(I_R[:,1:I_R.shape[1]],E1cap,E2cap,Vcap)
-                rospy.logdebug("After Ordering I_R")
-                rospy.logdebug(I_R[:,1:I_R.shape[1]]) 
+                ##################################################################################
+               
+                rospy.loginfo("After Ordering I_R")
+                rospy.loginfo(I_R[:,1:I_R.shape[1]]) 
                 #rospy.loginfo("Ec:"+str(Ec))
                 #rospy.loginfo("First step results: I_R:"+str(I_R[:,1:I_R.shape[1]])+" E1cap:"+str(E1cap)+" E2cap"+str(E2cap)+" Vcap:"+str(Vcap))
                 #rospy.loginfo(I_R)
+                
+                ##################################################################################
                 current_v_I=I_R
+                ##################################################################################
                 
                 #SECOND STEP ON VERTEX VISIT##
                 rospy.loginfo("E1cap:"+str(E1cap)+"E2cap:"+str(E2cap)+"Vcap:"+str(Vcap))
+                
+                ##################################################################################
                 second_step_on_vertex_visit()   
-                rospy.logdebug("Second Step Done!I_R:")
-                rospy.logdebug(I_R[:,1:I_R.shape[1]])
+                ##################################################################################
+                
+                
+                rospy.loginfo("Second Step Done!I_R:")
+                rospy.loginfo(I_R[:,1:I_R.shape[1]])
+                
+                ##################################################################################
                 current_v_I=I_R   
+                ##################################################################################
+                
                 forward_by_half_lane_width()  
                 #publish updated vertex info to /vertices topicx
                 for count,v in enumerate(vertex_array):
