@@ -102,7 +102,6 @@ class matrix_op:
     for i1 in range(0,V1):
      for i2 in range(V1,V1+V2):     
       if vert_col[i1].tag==vert_col[i2].tag  :     
-       rospy.loginfo("Found duplicate vertex:"+str(vert_col[i1].tag)) 
        for j1 in range(0,E1): 
          for j2 in range(E1,E1+E2): 
              if np.absolute(I[i1,j1])==np.absolute(I[i2,j2]):
@@ -128,7 +127,7 @@ class matrix_op:
               
                     deli.append(i1)
                     
-    rospy.loginfo("delj"+str(delj))
+    #rospy.loginfo("delj"+str(delj))
     I=np.delete(I,(deli),axis=0)
     I=np.delete(I,(delj),axis=1)
     vert_col=np.delete(vert_col,(deli),axis=0)
