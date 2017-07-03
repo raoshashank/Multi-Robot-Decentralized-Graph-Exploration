@@ -119,9 +119,9 @@ def second_step_on_vertex_visit():
             del ret_path[0]
             traverse_q.append(np.column_stack((vert_col,next_edge)))
     
-     rospy.loginfo("traverse_que:")
-     for i in traverse_q:
-         rospy.loginfo(i[:,1:i.shape[1]])
+     rospy.loginfo("traverse_que Length:"+str(len(traverse_q)))
+     #for i in traverse_q:
+     #    rospy.loginfo(i[:,1:i.shape[1]])
      next_edge=traverse_q.popleft()
      rospy.loginfo("Next Edge after popping from que:"+str(next_edge[:,1:next_edge.shape[1]]))
   
@@ -134,12 +134,14 @@ def second_step_on_vertex_visit():
              rospy.loginfo("ret_path is empty;arrived at destination vertex")
              orient_to_heading(turn_at_dest)     
              if op.non_zero_element(I_R[:,E1cap+E2cap])>0:
-    		 I_R[:,E1cap+E2cap]=-I_R[:,E1cap+E2cap]
+                I_R[:,E1cap+E2cap]=-I_R[:,E1cap+E2cap]
+                rospy.loginfo("Made last elements negative")   
              #circular shifting   
      	     b=I_R[:,Ec+1:]
              b=shift(b)
              I_R=I_R[:,0:Ec+1]
              I_R=np.column_stack((I_R,b))   
+             rospy.loginfo("CIRCULAR SHIFTING DONE")
     
      previous_vertex=current_v
      
@@ -270,6 +272,12 @@ def main():
     Ec=0
     err=0.2
     initial_heading=find_heading()
+    ##Lane width measurement
+    while check==[]:
+        rospy.loginfo("Loading")
+    
+    lane_width=check[0]+check[2]    
+    #rospy.loginfo("Lane Width : "+str(lane_width))
     while not rospy.is_shutdown():
         if check!=[]:
             count=0
@@ -303,7 +311,7 @@ def main():
                  elif abs(h+pi/2)<err:
                     I_dash.append(3*pi/2)
                     I_dash.append(pi/2)
-                 I_dash=np.array([I_dash]).transpose()
+                I_dash=np.array([I_dash]).transpose()
                 rospy.loginfo("I':"+str(I_dash))
                 orient_to_heading(pi/2)
                 current_v=vertex_info()
@@ -364,7 +372,8 @@ def main():
                 #rospy.loginfo("After merging I'' and vertex_I")
                 #rospy.loginfo(I_R[:,1:I_R.shape[1]]) 
                 ##rospy.loginfo(I_R)
-               
+                rospy.loginfo(I_R.shape)
+                rospy.loginfo("Vcap:"+str(Vcap)+" E1cap:"+str(E1cap)+" E2cap:"+str(E2cap))
                 ##################################################################################
                 [Ec,I_R[:,1:I_R.shape[1]]]=op.Order_Matrix(I_R[:,1:I_R.shape[1]],E1cap,E2cap,Vcap)
                 ##################################################################################
@@ -394,6 +403,8 @@ def main():
                 current_v_I=I_R   
                 ##################################################################################
                 rospy.loginfo(I_R[:,1:I_R.shape[1]])
+                rospy.loginfo(I_R.shape)
+                rospy.loginfo("Vcap:"+str(Vcap)+" E1cap:"+str(E1cap)+" E2cap:"+str(E2cap))
                 rospy.loginfo("-----")
                 forward_by_half_lane_width()  
                 #publish updated vertex info to /vertices topicx
