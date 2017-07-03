@@ -104,7 +104,7 @@ class matrix_op:
       if vert_col[i1].tag==vert_col[i2].tag  :     
        for j1 in range(0,E1): 
          for j2 in range(E1,E1+E2): 
-             if np.absolute(I[i1,j1])==np.absolute(I[i2,j2]):
+             if np.absolute(I[i1,j1])==np.absolute(I[i2,j2]) and I[i1,j1]!=0:
                     if np.sign(I[i1,j1])!=np.sign(I[i2,j2]):
                         I[i2,j2]=-np.absolute(I[i1,j1])
                         I[i1,j1]=I[i2,j2]
