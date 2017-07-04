@@ -60,7 +60,7 @@ def second_step_on_vertex_visit():
      global current_v,previous_vertex,next_vertex,turn_at_dest
      
      if op.non_zero_element_count(I_R[:,E1cap+E2cap])==2:
-        #rospy.loginfo("Exploration Complete")
+        rospy.loginfo("Exploration Complete")
         return
         
      else:
@@ -119,18 +119,18 @@ def second_step_on_vertex_visit():
             del ret_path[0]
             traverse_q.append(np.column_stack((vert_col,next_edge)))
     
-     #rospy.loginfo("traverse_que Length:"+str(len(traverse_q)))
-     #for i in traverse_q:
-     #    rospy.loginfo(i[:,1:i.shape[1]])
-     next_edge=traverse_q.popleft()
-     rospy.loginfo("Next Edge after popping from que:"+str(next_edge[:,1:next_edge.shape[1]]))
+         #rospy.loginfo("traverse_que Length:"+str(len(traverse_q)))
+         #for i in traverse_q:
+         #rospy.loginfo(i[:,1:i.shape[1]])
+         next_edge=traverse_q.popleft()
+         rospy.loginfo("Next Edge after popping from que:"+str(next_edge[:,1:next_edge.shape[1]]))
   
-     try:
-         next_vertex=ret_path.popleft() ##Immediate next vertex to reach
-         #rospy.loginfo("current vertex:"+current_v.tag)
-         #rospy.loginfo("next vertex:"+next_vertex.tag)
-         orient_to_heading(turn_to_next_vertex(current_v,next_vertex))
-     except IndexError:     
+         try:
+            next_vertex=ret_path.popleft() ##Immediate next vertex to reach
+            #rospy.loginfo("current vertex:"+current_v.tag)
+            #rospy.loginfo("next vertex:"+next_vertex.tag)
+            orient_to_heading(turn_to_next_vertex(current_v,next_vertex))
+         except IndexError:     
              #rospy.loginfo("ret_path is empty;arrived at destination vertex")
              orient_to_heading(turn_at_dest)     
              if op.non_zero_element(I_R[:,E1cap+E2cap])>0:
@@ -143,7 +143,7 @@ def second_step_on_vertex_visit():
              I_R=np.column_stack((I_R,b))   
              rospy.loginfo("CIRCULAR SHIFTING DONE")
     
-     previous_vertex=current_v
+         previous_vertex=current_v
      
         
 def orient_to_heading(dir):
@@ -304,7 +304,7 @@ def main():
                     I_dash.append(pi/2)
                     I_dash.append(3*pi/2)
                 
-                 elif abs(h-pi)<err:
+                 elif (h<0 and abs(h+pi)<err) or (h>0 and abs(h-pi)<err):
                     I_dash.append(pi)
                     I_dash.append(2*pi)
                 
@@ -371,6 +371,7 @@ def main():
                 #rospy.loginfo(I_R[:,1:I_R.shape[1]]) 
                 ##rospy.loginfo(I_R)
                 rospy.loginfo(I_R.shape)
+                rospy.loginfo("Before ordering:"+str(I_R[:,1:I_R.shape[1]]))
                 ##################################################################################
                 [Ec,I_R[:,1:I_R.shape[1]]]=op.Order_Matrix(I_R[:,1:I_R.shape[1]],E1cap,E2cap,Vcap)
                 ##################################################################################

@@ -4,31 +4,32 @@ from project.msg import vertex_info,vertices
 import numpy as np
 from rospy.numpy_msg import numpy_msg
 import pickle
-# v1=vertex_info()
-# v1.x=20
-# v1.y=20
-# I=np.array([[v1,0,0,1],[v1,0,0,2],[v1,1,1,1]])
-# ##use pickle to store and publish multi dimensional array
-# s=pickle.dumps(I)
-# v1.I=s
-# ##to retrieve I,use I= pickle.loads(v.I)
-# v_ar=vertices()
-# v_ar.v=[]
-# v_ar.v.append(v1)
-# pub=rospy.Publisher('/vertices',vertices,queue_size=10)
-# rate=rospy.Rate(20)
-# rate.sleep()
-# rate.sleep()
-# pub.publish(v_ar)
+from math import atan2,pi
+from nav_msgs.msg import Odometry
+def find_heading():
+    global odom_feedback
+    q=[0,0,0,0]
+    q[0]=odom_feedback.pose.pose.orientation.w
+    q[1]=odom_feedback.pose.pose.orientation.x
+    q[2]=odom_feedback.pose.pose.orientation.y
+    q[3]=odom_feedback.pose.pose.orientation.z  
+    heading=atan2(2*(q[0]*q[3]+q[1]*q[2]),1-2*(q[2]*q[2]+q[3]*q[3]))
+    return heading
+
+def odom_callback(msg):
+    global odom_feedback
+    odom_feedback=msg
+    heading=find_heading()
+    rospy.loginfo(heading)
 def callback(msg):
     msg=msg.v
     for i in msg:
         I=pickle.loads(i.I)
         rospy.loginfo(i.tag+str(I[:,1:I.shape[1]]))
-        rospy.loginfo("#################################3")
+        rospy.loginfo("#################################")
 
 rospy.init_node('tester')
-sub=rospy.Subscriber('/vertices',vertices,callback)
+sub_o=rospy.Subscriber('/bot_0/odom',Odometry,odom_callback)
 rospy.spin()
 
 

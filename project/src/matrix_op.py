@@ -142,7 +142,7 @@ class matrix_op:
                     if self.non_zero_element_count(I[0:V1,j2])<2:
                         I[0:V1,j2]=I[0:V1,j2]+I[0:V1,j1]
               
-                    deli.append(i1)
+            deli.append(i1)
                     
     #rospy.loginfo("delj"+str(delj))
     I=np.delete(I,(deli),axis=0)
