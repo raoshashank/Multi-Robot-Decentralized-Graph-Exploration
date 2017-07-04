@@ -66,7 +66,7 @@ def second_step_on_vertex_visit():
      else:
      
          if len(traverse_q)>0: 
-            rospy.loginfo("Traverse queue length:"+str(len(traverse_q)))
+            #rospy.loginfo("Traverse queue length:"+str(len(traverse_q)))
             last_edge=traverse_q[len(traverse_q)-1]
              # i will be index of non-zero element in last_edge
             for i in range(len(last_edge[:,0])):
@@ -90,21 +90,21 @@ def second_step_on_vertex_visit():
             for source in range(len(I_R[:,0])):
                 if I_R[source,0].tag==current_v.tag:
                     break
-            rospy.loginfo("Source: "+I_R[source,0].tag)
-            rospy.loginfo("I_R"+str(I_R[:,1:I_R.shape[1]]))
+            #rospy.loginfo("Source: "+I_R[source,0].tag)
+            #rospy.loginfo("I_R"+str(I_R[:,1:I_R.shape[1]]))
             ##identify index of known edge on next vertex for passing to dijkstra
             for target in range(len(next_edge)):
                 if next_edge[target]!=0:
                     turn_at_dest=np.absolute(next_edge[target])
                     break
-            
-            rospy.loginfo("target:"+I_R[target,0].tag)
+            ##turn_at_dest gives the angle to be turned on reaching the chosen vertex to travserse the unexplored edge
+            #rospy.loginfo("target:"+I_R[target,0].tag)
             traverse_q=deque()
             adj=op.inci_to_adj(I_R[:,1:I_R.shape[1]])
             #rospy.loginfo("Adjacency:"+str(adj))
             G=nx.from_numpy_matrix(adj,create_using=nx.DiGraph()) 
             path=nx.dijkstra_path(G,source,target)
-            rospy.loginfo("index of vertices in index path : " + str(path))
+            #rospy.loginfo("index of vertices in index path : " + str(path))
             #del path[0]       #First vertex is current vertex always in result  
             ret_path=[] 
             for p in path:
@@ -114,12 +114,12 @@ def second_step_on_vertex_visit():
             vert_col=I_R[:,0].transpose()
             for i in range(len(ret_path)-1):
                 e=edge_from_v(ret_path[i],ret_path[i+1],I_R)
-                rospy.loginfo("Found edge between "+ ret_path[i].tag+"and"+ret_path[i+1].tag)
+                #rospy.loginfo("Found edge between "+ ret_path[i].tag+"and"+ret_path[i+1].tag)
                 traverse_q.append(np.column_stack((vert_col,I_R[:,e])))
             del ret_path[0]
             traverse_q.append(np.column_stack((vert_col,next_edge)))
     
-     rospy.loginfo("traverse_que Length:"+str(len(traverse_q)))
+     #rospy.loginfo("traverse_que Length:"+str(len(traverse_q)))
      #for i in traverse_q:
      #    rospy.loginfo(i[:,1:i.shape[1]])
      next_edge=traverse_q.popleft()
@@ -127,17 +127,17 @@ def second_step_on_vertex_visit():
   
      try:
          next_vertex=ret_path.popleft() ##Immediate next vertex to reach
-         rospy.loginfo("current vertex:"+current_v.tag)
-         rospy.loginfo("next vertex:"+next_vertex.tag)
+         #rospy.loginfo("current vertex:"+current_v.tag)
+         #rospy.loginfo("next vertex:"+next_vertex.tag)
          orient_to_heading(turn_to_next_vertex(current_v,next_vertex))
      except IndexError:     
-             rospy.loginfo("ret_path is empty;arrived at destination vertex")
+             #rospy.loginfo("ret_path is empty;arrived at destination vertex")
              orient_to_heading(turn_at_dest)     
              if op.non_zero_element(I_R[:,E1cap+E2cap])>0:
                 I_R[:,E1cap+E2cap]=-I_R[:,E1cap+E2cap]
-                rospy.loginfo("Made last elements negative")   
+             #    rospy.loginfo("Made last elements negative")   
              #circular shifting   
-     	     b=I_R[:,Ec+1:]
+             b=I_R[:,Ec+1:]
              b=shift(b)
              I_R=I_R[:,0:Ec+1]
              I_R=np.column_stack((I_R,b))   
@@ -295,7 +295,7 @@ def main():
                 if previous_vertex.tag!='':
                  #rospy.loginfo("forming I' array") 
                  h=find_heading()
-                 rospy.loginfo("heading:"+str(h)+"error:"+str(err))
+                 #rospy.loginfo("heading:"+str(h)+"error:"+str(err))
                  if abs(h)<err:
                     I_dash.append(2*pi)
                     I_dash.append(pi)
@@ -312,7 +312,7 @@ def main():
                     I_dash.append(3*pi/2)
                     I_dash.append(pi/2)
                 I_dash=np.array([I_dash]).transpose()
-                rospy.loginfo("I':"+str(I_dash))
+                #rospy.loginfo("I':"+str(I_dash))
                 orient_to_heading(pi/2)
                 current_v=vertex_info()
                 current_v_I=[]
@@ -336,8 +336,6 @@ def main():
                     current_v_I=pickle.loads(current_v.I)
                
                 I_double_dash=I_R            
-                
-                
                 #Finding I'
                 #rospy.loginfo("previous_vertex:"+previous_vertex.tag)
                 if previous_vertex.tag!='':
@@ -353,7 +351,7 @@ def main():
                     ##############################################################
                     [I_double_dash,Vcap,E1cap,E2cap]=op.merge_matrices(I_dash,I_R)
                     ##############################################################                                   
-               
+                    rospy.loginfo("E1cap:"+str(E1cap)+"E2cap:"+str(E2cap)+"Vcap:"+str(Vcap))
                     #rospy.loginfo("After merging I' and I_R")
                     #rospy.loginfo(I_double_dash[:,1:I_double_dash.shape[1]])
                     #rospy.loginfo("E1cap:"+str(E1cap)+"E2cap:"+str(E2cap)+"Vcap:"+str(Vcap))
@@ -367,13 +365,12 @@ def main():
                 ###################################################################
                 [I_R,Vcap,E1cap,E2cap]=op.merge_matrices(I_double_dash,current_v_I)
                 ###################################################################
-
+                rospy.loginfo("E1cap:"+str(E1cap)+"E2cap:"+str(E2cap)+"Vcap:"+str(Vcap))
                 #rospy.loginfo("E1cap:"+str(E1cap)+"E2cap:"+str(E2cap)+"Vcap:"+str(Vcap)) 
                 #rospy.loginfo("After merging I'' and vertex_I")
                 #rospy.loginfo(I_R[:,1:I_R.shape[1]]) 
                 ##rospy.loginfo(I_R)
                 rospy.loginfo(I_R.shape)
-                rospy.loginfo("Vcap:"+str(Vcap)+" E1cap:"+str(E1cap)+" E2cap:"+str(E2cap))
                 ##################################################################################
                 [Ec,I_R[:,1:I_R.shape[1]]]=op.Order_Matrix(I_R[:,1:I_R.shape[1]],E1cap,E2cap,Vcap)
                 ##################################################################################
@@ -402,9 +399,6 @@ def main():
                 ##################################################################################
                 current_v_I=I_R   
                 ##################################################################################
-                rospy.loginfo(I_R[:,1:I_R.shape[1]])
-                rospy.loginfo(I_R.shape)
-                rospy.loginfo("Vcap:"+str(Vcap)+" E1cap:"+str(E1cap)+" E2cap:"+str(E2cap))
                 rospy.loginfo("-----")
                 forward_by_half_lane_width()  
                 #publish updated vertex info to /vertices topicx
