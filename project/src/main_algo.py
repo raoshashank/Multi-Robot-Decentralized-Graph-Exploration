@@ -11,6 +11,7 @@ from project.msg import vertex_info,vertices,incidence
 from collections import deque
 import networkx as nx   
 import pickle
+import sys
 
 def shift( matrix):
         ''' shift given 2D matrix in-place the given number of rows or columns
@@ -110,7 +111,6 @@ def second_step_on_vertex_visit():
             for p in path:
                 ret_path.append(I_R[p,0])
             ret_path=deque(ret_path)
-            rospy.loginfo("Que of vertices:"+str([v.tag for v in ret_path]))
             vert_col=I_R[:,0].transpose()
             for i in range(len(ret_path)-1):
                 e=edge_from_v(ret_path[i],ret_path[i+1],I_R)
@@ -141,7 +141,6 @@ def second_step_on_vertex_visit():
              b=shift(b)
              I_R=I_R[:,0:Ec+1]
              I_R=np.column_stack((I_R,b))   
-             rospy.loginfo("CIRCULAR SHIFTING DONE")
     
          previous_vertex=current_v
      
@@ -351,7 +350,6 @@ def main():
                     ##############################################################
                     [I_double_dash,Vcap,E1cap,E2cap]=op.merge_matrices(I_dash,I_R)
                     ##############################################################                                   
-                    rospy.loginfo("E1cap:"+str(E1cap)+"E2cap:"+str(E2cap)+"Vcap:"+str(Vcap))
                     #rospy.loginfo("After merging I' and I_R")
                     #rospy.loginfo(I_double_dash[:,1:I_double_dash.shape[1]])
                     #rospy.loginfo("E1cap:"+str(E1cap)+"E2cap:"+str(E2cap)+"Vcap:"+str(Vcap))
@@ -365,13 +363,10 @@ def main():
                 ###################################################################
                 [I_R,Vcap,E1cap,E2cap]=op.merge_matrices(I_double_dash,current_v_I)
                 ###################################################################
-                rospy.loginfo("E1cap:"+str(E1cap)+"E2cap:"+str(E2cap)+"Vcap:"+str(Vcap))
                 #rospy.loginfo("E1cap:"+str(E1cap)+"E2cap:"+str(E2cap)+"Vcap:"+str(Vcap)) 
                 #rospy.loginfo("After merging I'' and vertex_I")
                 #rospy.loginfo(I_R[:,1:I_R.shape[1]]) 
                 ##rospy.loginfo(I_R)
-                rospy.loginfo(I_R.shape)
-                rospy.loginfo("Before ordering:"+str(I_R[:,1:I_R.shape[1]]))
                 ##################################################################################
                 [Ec,I_R[:,1:I_R.shape[1]]]=op.Order_Matrix(I_R[:,1:I_R.shape[1]],E1cap,E2cap,Vcap)
                 ##################################################################################
@@ -461,8 +456,11 @@ if  __name__ == "__main__":
     
     ###########Global Variables############
    
-    sub_odom=rospy.Subscriber('/bot_0/odom',Odometry,odom_callback)
-    pub=rospy.Publisher('/bot_0/cmd_vel',Twist,queue_size=1)
+
+
+    bot_num='bot_'+str(sys.arg[1])
+    sub_odom=rospy.Subscriber('/'+bot_num+'/odom',Odometry,odom_callback)
+    pub=rospy.Publisher('/'+bot_num+'/cmd_vel',Twist,queue_size=1)
     
     sub=rospy.Subscriber('/bot_0/laser/scan',LaserScan,laser_callback)
     

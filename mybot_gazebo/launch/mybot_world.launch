@@ -24,6 +24,8 @@
   <node name="bot_0" pkg="gazebo_ros" type="spawn_model" output="screen"
    args="-urdf -param robot_description -model mybot0 -x -2.86261007881 -y -5 -z 0  -namespace bot_0" />
 
+  <node name="bot_2" pkg="gazebo_ros" type="spawn_model" output="screen"
+   args="-urdf -param robot_description -model mybot2 -x -5 -y 0 -z 0 -Y 3.665  -namespace bot_1" />
 
 
 </launch>
