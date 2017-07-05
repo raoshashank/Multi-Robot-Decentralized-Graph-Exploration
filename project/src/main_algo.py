@@ -416,7 +416,6 @@ def main():
 if  __name__ == "__main__":
     rospy.init_node('random_mover',anonymous=False) 
     ###########Global Variables############
-    bot_no=0
     q=[0,0,0,0]
     flag=0
     node_found=0
@@ -458,11 +457,11 @@ if  __name__ == "__main__":
    
 
 
-    bot_num='bot_'+str(sys.arg[1])
+    bot_num='bot_'+str(sys.argv[1])
     sub_odom=rospy.Subscriber('/'+bot_num+'/odom',Odometry,odom_callback)
     pub=rospy.Publisher('/'+bot_num+'/cmd_vel',Twist,queue_size=1)
     
-    sub=rospy.Subscriber('/bot_0/laser/scan',LaserScan,laser_callback)
+    sub=rospy.Subscriber('/'+bot_num+'/laser/scan',LaserScan,laser_callback)
     
     sub_vertex=rospy.Subscriber('/vertices',vertices,vertices_callback)
     pub_vertices=rospy.Publisher('/vertices',vertices,queue_size=1,latch=True)

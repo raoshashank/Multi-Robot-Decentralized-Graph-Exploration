@@ -1,3 +1,0 @@
-<launch>
-<node pkg="my_package" type="first_topic.py" name="topic_publisher" output="screen"></node>
-</launch>

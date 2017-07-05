@@ -1,8 +1,0 @@
-Symlinking /home/shashank/catkin_ws/src/location_monitor/devel/./setup.zsh
-Symlinking /home/shashank/catkin_ws/src/location_monitor/devel/./setup.bash
-Symlinking /home/shashank/catkin_ws/src/location_monitor/devel/./_setup_util.py
-Symlinking /home/shashank/catkin_ws/src/location_monitor/devel/./env.sh
-Symlinking /home/shashank/catkin_ws/src/location_monitor/devel/./setup.sh
-Symlinking /home/shashank/catkin_ws/src/location_monitor/devel/share/catkin_tools_prebuild/cmake/catkin_tools_prebuildConfig.cmake
-Symlinking /home/shashank/catkin_ws/src/location_monitor/devel/share/catkin_tools_prebuild/cmake/catkin_tools_prebuildConfig-version.cmake
-Symlinking /home/shashank/catkin_ws/src/location_monitor/devel/lib/pkgconfig/catkin_tools_prebuild.pc

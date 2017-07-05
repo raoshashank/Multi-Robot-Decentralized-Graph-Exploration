@@ -20,12 +20,26 @@
   
   <param name="robot_description" command="$(find xacro)/xacro.py '$(find mybot_description)/urdf/mybot.xacro'"/>
 
+  <node name="bot_1" pkg="gazebo_ros" type="spawn_model" output="screen"
+   args="-urdf -param robot_description -model mybot1 -x 4 -y 1 -z 0 -namespace bot_1" />
 
-  <node name="bot_0" pkg="gazebo_ros" type="spawn_model" output="screen"
-   args="-urdf -param robot_description -model mybot0 -x -2.86261007881 -y -5 -z 0  -namespace bot_0" />
+ <node name="bot_0" pkg="gazebo_ros" type="spawn_model" output="screen"
+   args="-urdf -param robot_description -model mybot0 -x -2.86261007881 -y -5 -z 0   -namespace bot_0" />
 
-  <node name="bot_2" pkg="gazebo_ros" type="spawn_model" output="screen"
-   args="-urdf -param robot_description -model mybot2 -x -5 -y 0 -z 0 -Y 3.665  -namespace bot_1" />
+<group ns='bot_1'>
+    <include file="$(find project)/launch/start_exploration.launch">
+        <arg name="robot_number" value="1"/>
+     </include>
+</group>
 
+
+
+<group ns='bot_0'>
+  <include file="$(find project)/launch/start_exploration.launch">
+        <arg name="robot_number" value="0"/>
+     </include>
+  
+</group>
+  
 
 </launch>

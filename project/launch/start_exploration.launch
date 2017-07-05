@@ -1,3 +1,5 @@
 <launch>
-<node pkg='project' type='main_algo.py' name='random_mover' output='screen'></node>
+<arg name="robot_number"/>
+<node pkg='project' type='main_algo.py' name='random_mover' output='screen'
+ args="$(arg robot_number)" respawn="false"/>
 </launch>
