@@ -4,10 +4,15 @@ import numpy as np
 
 class matrix_op:
    def non_zero_element(self,I):
+      
+      ##This function finds  non-zero-element in the given column matrix
        i=[x for x in I if x!=0]
        return i 
                 
    def non_zero_element_count(self,I):
+       
+      ##This function finds the number of non-zero-elements in the given column matrix        
+
        count=0
        for i in I:
            if i!=0:
@@ -16,6 +21,8 @@ class matrix_op:
 
 
    def out(self,matrix):
+
+    #find out edges in the supplied incidence matrix   
     #only 1 -ve element and only 1 element
     out_edge=np.zeros((matrix.shape[0],0))
     for i in range(matrix.shape[1]):
@@ -25,6 +32,9 @@ class matrix_op:
     return out_edge
     
    def completed(self,matrix):
+    #find out edges in the supplied incidence matrix   
+    #2 non-zero entries in column vector
+
     completed_edges=np.zeros((matrix.shape[0],0))
     for i in range(matrix.shape[1]):
             if self.non_zero_element_count(matrix[:,i])==2:
@@ -34,6 +44,10 @@ class matrix_op:
     
     
    def unexplored(self,matrix):
+    
+    #Function to find the completed columns in incidence matrix
+    #1 non-negative,non-zero element in column
+    
     unexplored_edge=np.zeros((matrix.shape[0],0))
     for i in range(matrix.shape[1]):
       if self.non_zero_element_count(matrix[:,i])==1 and self.non_zero_element(matrix[:,i])>0:
@@ -42,6 +56,9 @@ class matrix_op:
     return unexplored_edge
 
    def inci_to_adj(self,I):
+
+    #find adjacency matrix corresponding to supplied incidence matrix considering only the completed edges(2 non-zero values in column)
+
     R=I.shape[0]
     C=I.shape[1]
     temp=[]
@@ -69,6 +86,8 @@ class matrix_op:
 
    
    def merge_matrices(self,I1,I2):
+
+    #The same algorithm as mentioned in paper with extra conditions to merge two incidece matrices by eliminating copies of vertices and edges
     #when I_R is empty ie; at start of exploration
     if I1.shape[1]==0:
         return [I2,I2.shape[0],0,I2.shape[1]-1]
@@ -96,12 +115,11 @@ class matrix_op:
     E1cap=E1
     E2cap=E2
     Vcap=V1+V2
-
     delj=[]
     deli=[]
-    I=np.row_stack((np.column_stack((I1,np.zeros((V1,E2)))),np.column_stack((np.zeros((V2,E1)),I2))))
+    I=np.row_stack((np.column_stack((I1,np.zeros((V1,E2)))),np.column_stack((np.zeros((V2,E1)),I2)))) #makw array as [[I1,0],[0,I2]]
     
-    vert_col=np.append(vert_col_I1,vert_col_I2)
+    vert_col=np.append(vert_col_I1,vert_col_I2)                 #isolate the vertex columns of both arrays and append them and then the same rows delted can be deleted from this array as well
   
     for i1 in range(0,V1):
      for i2 in range(V1,V1+V2):     
@@ -109,8 +127,8 @@ class matrix_op:
        for j1 in range(0,E1): 
          for j2 in range(E1,E1+E2): 
 
-            if j1 not in delj and j2 not in delj: 
-             if np.absolute(I[i1,j1])==np.absolute(I[i2,j2]) and I[i1,j1]!=0:
+            if j1 not in delj and j2 not in delj:                               #no - need to check the elements if the column is going to be elimninated anyway/ delj should have unique elements
+             if np.absolute(I[i1,j1])==np.absolute(I[i2,j2]) and I[i1,j1]!=0:  # check only non-zero elements
                     if np.sign(I[i1,j1])!=np.sign(I[i2,j2]):
                         I[i2,j2]=-np.absolute(I[i1,j1])
                         I[i1,j1]=I[i2,j2]
@@ -144,19 +162,18 @@ class matrix_op:
               
             deli.append(i1)
                     
-    #rospy.loginfo("delj"+str(delj))
     I=np.delete(I,(deli),axis=0)
     I=np.delete(I,(delj),axis=1)
-    vert_col=np.delete(vert_col,(deli),axis=0)
+    vert_col=np.delete(vert_col,(deli),axis=0)   #append the vertex_column back to the merged incidence matrix
     I=np.column_stack((vert_col.transpose(),I))
     Vcap=I.shape[0]
-    #if E1cap<0:
-    #    E1cap=0
-    #if E2cap<0:
-    #    E2cap=0
     return [I,Vcap,E1cap,E2cap] 
 
    def Order_Matrix(self,I_Merged,E1cap,E2cap,Vcap):
+
+        #Order the matrix as [completed,out,unexplored]
+
+
         I1=I_Merged[:,0:E1cap]
         I2=I_Merged[:,E1cap:]
         I1_completed=self.completed(I1)
