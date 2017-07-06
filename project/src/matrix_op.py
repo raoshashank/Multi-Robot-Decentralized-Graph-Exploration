@@ -58,7 +58,6 @@ class matrix_op:
    def inci_to_adj(self,I):
 
     #find adjacency matrix corresponding to supplied incidence matrix considering only the completed edges(2 non-zero values in column)
-
     R=I.shape[0]
     C=I.shape[1]
     temp=[]
@@ -66,7 +65,7 @@ class matrix_op:
     i=0
     j=0
     count=0
-    for c in range(0,C):
+    for c in range(1,C):
      for r in range(0,R):
          if I[r][c]!=0:
              temp.append(r)
@@ -74,8 +73,10 @@ class matrix_op:
      if count==2:
         i=temp[0]
         j=temp[1]
-        adj[i][j]=1
-        adj[j][i]=1
+        dst=0
+        dst=sqrt(pow((I[i,0].x-I[j,0].x),2)+pow((I[i,0].y-I[j,0].y),2))
+        adj[i][j]=dst
+        adj[j][i]=dst
      temp=[]
      count=0
 
