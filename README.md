@@ -14,6 +14,3 @@ The main files associated with the code are:
 
 To run the simulation:
 roslaunch mybot_gazebo mybot_world.launch
-
-Find the report for the project at this link:
-                  https://drive.google.com/open?id=0B-lJ4uDHdA_0Sl9Cbzl2SGkxYms
